@@ -3,11 +3,11 @@
 #include <malloc.h>
 #include <string.h>
 
-enum bufferStatus {
+typedef enum {
 	BUFFER_EMPTY,
 	BUFFER_PARTIAL,
 	BUFFER_FULL
-};
+} bufferStatus;
 
 /// <summary> The main buffer struct. </summary>
 typedef struct {

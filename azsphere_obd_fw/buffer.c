@@ -1,8 +1,5 @@
 #include "buffer.h"
 
-#include <malloc.h>
-#include <string.h>
-
 buffer_t newBuffer(int _size) {
 	buffer_t _buf;
 	_buf.head = 0;

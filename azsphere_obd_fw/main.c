@@ -6,6 +6,8 @@
 #include <applibs/log.h>
 #include <applibs/gpio.h>
 
+#include "TCPIO.h"
+
 int main(void)
 {
     // This minimal Azure Sphere app repeatedly toggles GPIO 9, which is the green channel of RGB
@@ -30,9 +32,6 @@ int main(void)
 
     const struct timespec sleepTime = {1, 0};
     while (true) {
-        GPIO_SetValue(fd, GPIO_Value_Low);
-        nanosleep(&sleepTime, NULL);
-        GPIO_SetValue(fd, GPIO_Value_High);
-        nanosleep(&sleepTime, NULL);
+		initSocket();
     }
 }
