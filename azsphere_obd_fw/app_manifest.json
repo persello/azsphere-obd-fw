@@ -1,0 +1,19 @@
+{
+  "SchemaVersion": 1,
+  "Name" : "azsphere_obd_fw",
+  "ComponentId" : "4ef2cefc-2c95-418a-987e-3fda133fd663",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [],
+  "Capabilities": {
+    "AllowedConnections": [],
+    "Gpio": [ 9 ],
+    "Uart": [],
+    "AllowedTcpServerPorts": [ 2400 ],
+    "WifiConfig": true,
+    "MutableStorage": {
+      "SizeKB": 64
+    },
+    "SystemTime": true
+  },
+  "ApplicationType":"Default"
+}
