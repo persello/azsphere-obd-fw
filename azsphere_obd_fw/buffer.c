@@ -1,13 +1,7 @@
 #include "buffer.h"
 
-buffer_t newBuffer(int _size) {
-	buffer_t _buf;
-	_buf.head = 0;
-	_buf.tail = 0;
-	_buf.size = _size;
-	_buf.content = (char*)malloc(_size * sizeof(char));
-	return _buf;
-}
+#include <malloc.h>
+#include <string.h>
 
 void headForward(buffer_t* _buffer) {
 

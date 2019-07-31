@@ -1,7 +1,5 @@
 #pragma once
 #include <stddef.h>
-#include <malloc.h>
-#include <string.h>
 
 typedef enum {
 	BUFFER_EMPTY,
@@ -27,12 +25,6 @@ typedef struct {
 	bufferStatus status;
 
 } buffer_t;
-
-/// <summary> Creates a new buffer.
-/// <param name="_size"> The size in bytes of the new buffer. </param>
-/// <returns> The newly created buffer. </returns>
-/// </summary>
-buffer_t newBuffer(int _size);
 
 /// <summary> Adds a character to the buffer.
 /// <param name="_buffer"> The buffer in which to add the character. </param>

@@ -52,10 +52,12 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalOptions>-Werror=implicit-function-declaration %(AdditionalOptions)</AdditionalOptions>
+      <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</Verbose>
     </ClCompile>
     <Link>
       <LibraryDependencies>applibs;pthread;gcc_s;c</LibraryDependencies>
       <AdditionalOptions>-Wl,--no-undefined -nodefaultlibs %(AdditionalOptions)</AdditionalOptions>
+      <VerboseOutput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</VerboseOutput>
     </Link>
   </ItemDefinitionGroup>
 </Project>
