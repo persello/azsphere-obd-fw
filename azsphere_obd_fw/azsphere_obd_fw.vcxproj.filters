@@ -19,7 +19,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <UpToDateCheckInput Include="app_manifest.json" />
-    <ClCompile Include="TCPIO.c">
+    <ClCompile Include="appTCP.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -27,13 +27,13 @@
     <ClInclude Include="config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TCPIO.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="buffer.c">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="appTCP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

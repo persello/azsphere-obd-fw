@@ -36,16 +36,19 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <UseMultiToolTask>false</UseMultiToolTask>
+  </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
-    <ClCompile Include="TCPIO.c" />
+    <ClCompile Include="appTCP.c" />
     <UpToDateCheckInput Include="app_manifest.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buffer.c" />
     <ClInclude Include="buffer.h" />
     <ClInclude Include="config.h" />
-    <ClInclude Include="TCPIO.h" />
+    <ClInclude Include="appTCP.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -1,7 +1,18 @@
-#include "buffer.h"
-
 #include <malloc.h>
 #include <string.h>
+
+/* Due to some compilation order restrictions of the current environment, this
+	file has been included at the end of its header. Being this not a good practice,
+	remember not to do this in other files and to revert back to the standard including
+	order when a better solution is available. */
+
+void initCircBuffer(buffer_t* _buffer, int _size) {
+	_buffer->head = 0;
+	_buffer->tail = 0;
+	_buffer->size = _size;
+	_buffer->content = (char*)malloc(_size * sizeof(char));
+	_buffer->status = BUFFER_EMPTY;
+}
 
 void headForward(buffer_t* _buffer) {
 

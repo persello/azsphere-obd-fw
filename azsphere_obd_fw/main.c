@@ -8,7 +8,7 @@
 #include <applibs/log.h>
 #include <applibs/gpio.h>
 
-#include "TCPIO.h"
+#include "appTCP.h"
 
 int main(void)
 {
@@ -29,10 +29,8 @@ int main(void)
         return -1;
     }
 
-	pthread_t networkThread;
-	pthread_create(&networkThread, NULL, TCPThread, NULL);
+	startTCPThreads();
 
-    const struct timespec sleepTime = {1, 0};
     while (1) {
 		GPIO_SetValue(fd, GPIO_Value_High);
 		sleep(1);
