@@ -117,18 +117,48 @@ int endSocket() {
 buffer_t inputBuffer;
 buffer_t outputBuffer;
 
-int exit;		// Variable shared between receive and send threads, in case closing the socket is not enough.
+int TCPexit;		// Variable shared between receive and send threads, in case closing the socket is not enough.
 
 ///////////// PUBLIC /////////////
 
-int readTCPString(char** _data) {}
+int readTCPString(char** _data) {
+	char workingbuf[1024];
+
+	char c;
+	int i = 0;
+	int result = 0;
+
+	do {
+		if (getCharBuffer(&inputBuffer, &c) == -1) {
+			// If the returned command is incomplete exit from the loop, but let the caller know.
+			result = -1;
+			break;
+		}
+
+		if (!(c == NULL || c == '\r' || c == '\n')) {
+			workingbuf[i] = c;
+			i++;
+		}
+
+		// When we end with a \n the command is complete, so we return 0.
+	} while (c != '\n');
+
+	// Add a null terminator for strcpy
+	workingbuf[i] = '\0';
+
+	// Allocate only what needed
+	*_data = malloc(i + 1);
+	strcpy(*_data, workingbuf);
+	return result;
+}
+
 int writeTCPString(char* _data) {
 
 	int length = strlen(_data);
 
 	// This way we don't even put a \r\n on empty strings
 	if (length) {
-		
+
 		// In case we need to add \r, \n and null terminator
 		char s[length + 3];
 		if (strlen(_data) >= 2 && !strcmp(_data + strlen(_data) - 2, "\r\n")) {
@@ -140,10 +170,10 @@ int writeTCPString(char* _data) {
 			strcpy(s, _data);
 			strcat(s, "\r\n");
 		}
-		
+
 		// Pushes all the characters to the output buffer
 		for (int i = 0; i < strlen(s); i++) {
-			
+
 			// Exit on buffer full
 			if (putCharBuffer(&outputBuffer, s[i]) == -1) {
 				return -1;
@@ -156,7 +186,7 @@ int writeTCPString(char* _data) {
 
 void* TCPSendThread(void* _param) {
 
-	while (!exit) {
+	while (!TCPexit) {
 
 		// Skip if empty
 		if (outputBuffer.status != BUFFER_EMPTY) {
@@ -179,29 +209,29 @@ void* TCPSendThread(void* _param) {
 void* TCPReceiveThread(void* _param) {
 
 	// Try starting the socket, exits immediately on fail. Waits until socket is open (blocking).
-	exit = initSocket();
+	TCPexit = initSocket();
 
 	// When (and if) the socket is initialized, we also start sending data.
-	if (!exit) {
+	if (!TCPexit) {
 		pthread_create(&sendThread, NULL, TCPSendThread, NULL);
 	}
 
-	while (!exit) {
+	while (!TCPexit) {
 
 		// Receive
 		char rec;
 		int receiveResult = receiveOne(&rec);		// Receive a character (blocking)
 		if (receiveResult == 0) {					// When the connection closes
-			exit = 1;
+			TCPexit = 1;
 			Log_Debug("TCPIO: Socket closed gracefully. Exiting now.\n");
 		}
 		else if (receiveResult == -1) {				// When there is an error
-			exit = 1;
+			TCPexit = 1;
 			Log_Debug("TCPIO: Socket error. Exiting now. Details: \"%s\"\n", strerror(errno));
 		}
 		else {										// When correctly received
 			if (putCharBuffer(&inputBuffer, rec) == -1) {	// Push to buffer, if full...
-				exit = 1;
+				TCPexit = 1;
 				Log_Debug("TCPIO: Input buffer was full. Exiting now.");
 			}
 		}
