@@ -6,9 +6,9 @@
   "CmdArgs": [],
   "Capabilities": {
     "AllowedConnections": [],
-    "Gpio": [ 9 ],
-    "Uart": [],
-    "AllowedTcpServerPorts": [ 2400 ],
+    "Gpio": [ 8, 9, 10 ],
+    "Uart": [ "ISU0" ],
+    "AllowedTcpServerPorts": [ 15500 ],
     "WifiConfig": true,
     "MutableStorage": {
       "SizeKB": 64

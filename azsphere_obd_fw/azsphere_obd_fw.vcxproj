@@ -42,6 +42,7 @@
   <ItemGroup>
     <ClCompile Include="main.c" />
     <ClCompile Include="appTCP.c" />
+    <ClCompile Include="obdserial.c" />
     <UpToDateCheckInput Include="app_manifest.json" />
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +50,9 @@
     <ClInclude Include="buffer.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="appTCP.h" />
+    <ClInclude Include="obdpids.h" />
+    <ClInclude Include="obdserial.h" />
+    <ClInclude Include="vehicleproperties.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

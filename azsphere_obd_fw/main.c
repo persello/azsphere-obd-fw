@@ -8,7 +8,10 @@
 #include <applibs/log.h>
 #include <applibs/gpio.h>
 
+
 #include "appTCP.h"
+#include "obdserial.h"
+#include "config.h"
 
 int main(void)
 {
@@ -21,7 +24,7 @@ int main(void)
     // It is NOT recommended to use this as a starting point for developing apps; instead use
     // the extensible samples here: https://github.com/Azure/azure-sphere-samples
 
-    int fd = GPIO_OpenAsOutput(9, GPIO_OutputMode_PushPull, GPIO_Value_High);
+    int fd = GPIO_OpenAsOutput(PIN_LED_BLUE, GPIO_OutputMode_PushPull, GPIO_Value_High);
     if (fd < 0) {
         Log_Debug(
             "Error opening GPIO: %s (%d). Check that app_manifest.json includes the GPIO used.\n",
@@ -30,11 +33,13 @@ int main(void)
     }
 
 	startTCPThreads();
+	initStandardOBDModule();
 
+	struct timespec ts = {0, 200000000};
     while (1) {
-		GPIO_SetValue(fd, GPIO_Value_High);
-		sleep(1);
 		GPIO_SetValue(fd, GPIO_Value_Low);
-		sleep(1);
+		nanosleep(&ts, NULL);
+		GPIO_SetValue(fd, GPIO_Value_High);
+		sleep(3);
     }
 }
