@@ -25,6 +25,9 @@
     <ClCompile Include="obdserial.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="commandinterpreter.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h">
@@ -46,6 +49,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vehicleproperties.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="commandinterpreter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

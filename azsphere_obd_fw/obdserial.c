@@ -11,9 +11,7 @@ OBDModule OBD;
 void OBDModule_Init(OBDModule* _module) {
 	_module->baudRate = -1;
 	_module->connected = 0;
-	_module->details = malloc(100);
 	_module->initialized = 0;
-	_module->name = malloc(100);
 	_module->uartfd = -1;
 
 	// It is requested to initialize an UART_Config struct

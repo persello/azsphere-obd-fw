@@ -40,6 +40,7 @@
     <UseMultiToolTask>false</UseMultiToolTask>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="commandinterpreter.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="appTCP.c" />
     <ClCompile Include="obdserial.c" />
@@ -48,6 +49,7 @@
   <ItemGroup>
     <ClInclude Include="buffer.c" />
     <ClInclude Include="buffer.h" />
+    <ClInclude Include="commandinterpreter.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="appTCP.h" />
     <ClInclude Include="obdpids.h" />

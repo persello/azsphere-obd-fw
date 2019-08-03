@@ -57,18 +57,11 @@ char* getWlanAddr(char* _interfaceName) {
 	return "127.0.0.1";
 }
 
-int send_all(int _socket, void* _buffer)
+int send_all(int _socket, char* _buffer)
 {
-	char* ptr = (char*)_buffer;
-	size_t length = strlen((char*)_buffer);
-	while (length > 0)
-	{
-		int i = send(_socket, ptr, length, NULL);
-		if (i < 1) return -1;
-		ptr += i;
-		length -= i;
-	}
-	return 0;
+	size_t length = strlen(_buffer);
+	int i = write(_socket, _buffer, length);
+	return i;
 }
 
 int initSocket() {
@@ -84,7 +77,7 @@ int initSocket() {
 
 	// Try to bind sock and ServerIp
 	if (bind(sock, (struct sockaddr*) & ServerIp, sizeof(ServerIp)) == -1) {
-		Log_Debug("TCPIO: Socket binding failed.\n\tERROR: \"%s\".\n", strerror(errno));
+		Log_Debug("TCPIO: Socket binding failed. ERROR: \"%s\".\n", strerror(errno));
 		return -1;
 	}
 
@@ -110,10 +103,6 @@ int receiveOne(char* _data) {
 	return result;
 }
 
-int endSocket() {
-	close(client_conn);
-}
-
 buffer_t inputBuffer;
 buffer_t outputBuffer;
 
@@ -121,8 +110,10 @@ int TCPexit;		// Variable shared between receive and send threads, in case closi
 
 ///////////// PUBLIC /////////////
 
-int readTCPString(char** _data) {
-	char workingbuf[1024];
+int readTCPString(char* _data[]) {
+
+	// A temporary buffer, _data will have the correct size.
+	char* workingbuf = malloc(1024 * sizeof(char));
 
 	char c;
 	int i = 0;
@@ -147,8 +138,8 @@ int readTCPString(char** _data) {
 	workingbuf[i] = '\0';
 
 	// Allocate only what needed
-	*_data = malloc(i + 1);
-	strcpy(*_data, workingbuf);
+	strcpy(_data, workingbuf);
+	free(workingbuf);
 	return result;
 }
 
@@ -191,17 +182,22 @@ void* TCPSendThread(void* _param) {
 		// Skip if empty
 		if (outputBuffer.status != BUFFER_EMPTY) {
 
-			// String for output
-			char snd[1024];
-			int i;
+			// Buffer for calculating minimum size.
+			char buf[1024];
+			int i = 0;
 
-			// Load all the contents of the buffer into the output string
+			memset(buf, 0, 1024);
+
+			// Load all the contents of the buffer into the output string.
 			while (outputBuffer.status != BUFFER_EMPTY) {
-				getCharBuffer(&outputBuffer, &snd[i++]);
+				getCharBuffer(&outputBuffer, &buf[i++]);
 			}
-
-			// Send everything (blocks until everything is sent)
-			send_all(client_conn, &snd);
+			
+			char snd[strlen(buf) + 1];
+			snd[0] = '\0';
+			strcpy(snd, buf);
+			// Send everything (blocks until everything is sent).
+			send_all(client_conn, snd);
 		}
 	}
 }
@@ -250,9 +246,9 @@ void startTCPThreads() {
 	// We load some initialization data into the output buffer (FW version and other)
 	writeTCPString(init_data);
 
-	/* We start the receive thread, it will start the send one if the socket is ready.
-	Since listening to a new connection is a blocking action (and can't be made
-	non-blocking on this platform due to the unavailability of fcntl), we choose to
-	let the receiveThread manage the socket's opening and the send thread's creation. */
+	/* We start the receive thread, it will start sending buffer data when the socket
+	is ready. Since listening to a new connection is a blocking action (and can't be
+	made non-blocking on this platform due to the unavailability of fcntl), we choose
+	to let the receiveThread manage the socket's opening and the send thread's creation. */
 	pthread_create(&receiveThread, NULL, TCPReceiveThread, NULL);
 }

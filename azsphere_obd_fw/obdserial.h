@@ -7,8 +7,8 @@ typedef struct {
 	int connected;
 	int initialized;
 	long baudRate;
-	char* name;
-	char* details;
+	char name[100];
+	char details[100];
 	UART_Config uartConfig;
 	int uartfd;
 } OBDModule;

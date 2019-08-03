@@ -12,6 +12,7 @@
 #include "appTCP.h"
 #include "obdserial.h"
 #include "config.h"
+#include "commandinterpreter.h"
 
 int main(void)
 {
@@ -33,6 +34,9 @@ int main(void)
     }
 
 	startTCPThreads();
+
+	// Connect the command interpreter to the TCP buffers.
+	startCommandInterpreter(readTCPString, writeTCPString);
 	initStandardOBDModule();
 
 	struct timespec ts = {0, 200000000};
