@@ -27,7 +27,7 @@ int waitingForBtnPress;
 
 void* commandInterpreterThread(void* _param) {
 
-	Log_Debug("COMMANDINT: This is the command interpreter thread.\n");
+	Log_Debug("COMMANDINT: Command interpreter thread started.\n");
 
 	while (!halt) {
 

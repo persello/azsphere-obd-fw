@@ -45,5 +45,6 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 }
 
 int initStandardOBDModule() {
+	Log_Debug("OBDSERIAL: Initializing OBD module using predefined parameters.\n");
 	return initOBDComm(OBD_SERIAL, &OBD, OBD_INITIAL_BR);
 }

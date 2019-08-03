@@ -33,6 +33,8 @@ pthread_t receiveThread;
 /// </summary>
 char* getWlanAddr(char* _interfaceName) {
 
+	Log_Debug("TCPIO: Getting IP address.\n");
+
 	struct ifaddrs* addrs;
 	getifaddrs(&addrs);
 	struct ifaddrs* tmp = addrs;
@@ -65,6 +67,9 @@ int send_all(int _socket, char* _buffer)
 }
 
 int initSocket() {
+
+	Log_Debug("TCPIO: TCP socket initialization started.\n");
+
 	sock = socket(AF_INET, SOCK_STREAM, 0);		// Socket creation (AF_INET -> IPv4, SOCK_STREAM -> TCP)
 
 	wlan_addr = getWlanAddr(INTERFACE_NAME);	// Getting wlan0's IP address
@@ -177,6 +182,8 @@ int writeTCPString(char* _data) {
 
 void* TCPSendThread(void* _param) {
 
+	Log_Debug("TCPIO: TCP send thread started.\n");
+
 	while (!TCPexit) {
 
 		// Skip if empty
@@ -203,6 +210,8 @@ void* TCPSendThread(void* _param) {
 }
 
 void* TCPReceiveThread(void* _param) {
+	
+	Log_Debug("TCPIO: TCP receive thread started.\n");
 
 	// Try starting the socket, exits immediately on fail. Waits until socket is open (blocking).
 	TCPexit = initSocket();
@@ -239,11 +248,16 @@ void* TCPReceiveThread(void* _param) {
 
 void startTCPThreads() {
 
-	// Buffer initialization
+	Log_Debug("TCPIO: Starting threads.\n");
+
+	// Allow to run again if previously stopped.
+	TCPexit = 0;
+
+	// Buffer initialization.
 	initCircBuffer(&inputBuffer, 1024);
 	initCircBuffer(&outputBuffer, 1024);
 
-	// We load some initialization data into the output buffer (FW version and other)
+	// We load some initialization data into the output buffer (FW version and other).
 	writeTCPString(init_data);
 
 	/* We start the receive thread, it will start sending buffer data when the socket
@@ -251,4 +265,8 @@ void startTCPThreads() {
 	made non-blocking on this platform due to the unavailability of fcntl), we choose
 	to let the receiveThread manage the socket's opening and the send thread's creation. */
 	pthread_create(&receiveThread, NULL, TCPReceiveThread, NULL);
+}
+
+void stopTCPThreads() {
+	TCPexit = 1;
 }
