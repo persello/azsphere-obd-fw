@@ -4,9 +4,15 @@
 
 #include <soc/mt3620_uarts.h>
 
+#define PIN_LED_APP		4
+#define PIN_LED_WLAN	5
+
 #define PIN_LED_RED		8
 #define PIN_LED_GREEN	9
 #define PIN_LED_BLUE	10
+
+#define PIN_BTN_A		12
+#define PIN_BTN_B		13
 
 #define INTERFACE_NAME	"wlan0"
 #define PORT_NUMBER		15500

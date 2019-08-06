@@ -6,7 +6,7 @@
   "CmdArgs": [],
   "Capabilities": {
     "AllowedConnections": [],
-    "Gpio": [ 8, 9, 10 ],
+    "Gpio": [ 8, 9, 10, 12, 13 ],
     "Uart": [ "ISU0" ],
     "AllowedTcpServerPorts": [ 15500 ],
     "WifiConfig": true,

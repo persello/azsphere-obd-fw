@@ -37,8 +37,15 @@ int main(void)
 	Log_Debug("MAIN: SIGTERM handler registered, initializing GPIOs.\n");
 
 	// GPIO initialization
-	int fd = GPIO_OpenAsOutput(PIN_LED_BLUE, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	if (fd < 0) {
+	int btnafd = GPIO_OpenAsInput(PIN_BTN_A);
+	if (btnafd < 0) {
+		Log_Debug(
+			"MAIN: Error opening GPIO: %s (%d). Check that app_manifest.json includes the GPIO used.\n",
+			strerror(errno), errno);
+		return -1;
+	}
+	int btnbfd = GPIO_OpenAsInput(PIN_BTN_B);
+	if (btnbfd < 0) {
 		Log_Debug(
 			"MAIN: Error opening GPIO: %s (%d). Check that app_manifest.json includes the GPIO used.\n",
 			strerror(errno), errno);
@@ -46,6 +53,9 @@ int main(void)
 	}
 
 	Log_Debug("MAIN: Starting all the threads.\n");
+
+	// The threads are initially stopped.
+	TCPThreadStatus = STATUS_UNKNOWN;
 
 	// Starts TCP I/O threads.
 	startTCPThreads();
@@ -59,10 +69,32 @@ int main(void)
 	Log_Debug("MAIN: Initialization finished.\n");
 
 	struct timespec ts = { 0, 200000000 };
+	GPIO_Value_Type btnares;
+	GPIO_Value_Type btnaprev;
+	GPIO_Value_Type btnbres;
+	GPIO_Value_Type btnbprev;
+
+
 	while (1) {
-		GPIO_SetValue(fd, GPIO_Value_Low);
-		nanosleep(&ts, NULL);
-		GPIO_SetValue(fd, GPIO_Value_High);
-		sleep(3);
+
+		GPIO_GetValue(btnafd, &btnares);
+		if (btnares == GPIO_Value_High && btnaprev == GPIO_Value_Low) {
+			writeTCPString("BTNA");
+			Log_Debug("MAIN: Button A pressed, adding message to output buffer.\n");
+		}
+		btnaprev = btnares;
+
+		GPIO_GetValue(btnbfd, &btnbres);
+		if (btnbres == GPIO_Value_High && btnbprev == GPIO_Value_Low && TCPThreadStatus == STATUS_RUNNING) {
+			stopTCPThreads();
+			Log_Debug("MAIN: Button B pressed, resetting TCP threads.\n");
+		}
+		btnbprev = btnbres;
+
+		// TODO: Define 1 as stopping, 2 as stopped.
+		if (TCPThreadStatus == STATUS_STOPPED) {
+			Log_Debug("MAIN: TCP threads are stopped. Restarting...\n");
+			startTCPThreads();
+		}
 	}
 }

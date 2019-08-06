@@ -8,7 +8,10 @@
 #include <string.h>
 #include <pthread.h>
 
+#define WIFICONFIG_STRUCTS_VERSION 1
+
 #include <applibs/log.h>
+#include <applibs/wificonfig.h>
 
 
 typedef struct {
@@ -40,7 +43,7 @@ void* commandInterpreterThread(void* _param) {
 
 		// 1024 because could be and encrypted or non-standard command.
 		char buf[1024];
-		
+
 		// buf is now an empty string.
 		memset(buf, 0, 1024);
 
@@ -94,11 +97,98 @@ void* commandInterpreterThread(void* _param) {
 		int answered = 0;
 
 		// Process the current command before the answer.
+
+		// Ping request
 		if (!strcmp(currentCommand.header, "PING")) {
 			Log_Debug("COMMANDINT: Command decoded as ping request.\n");
 			answer = malloc(5 * sizeof(char));
-			answer = strdup("PING");
+			memset(answer, 0, 5 * sizeof(char));
+			strcat(answer, "PING");
 			answered = 1;
+
+			// TODO: Add ping timer control
+
+		}
+		// OOBE Request
+		else if (!strcmp(currentCommand.header, "OOBE")) {
+			Log_Debug("COMMANDINT: Command decoded as OOBE request.\n");
+
+			// Test variable
+			char OOBEAllowed = 1;
+			if (OOBEAllowed) {
+				Log_Debug("COMMANDINT: OOBE allowed, entering configuration mode.\n");
+				isInOOBE = 1;
+				answer = malloc(5 * sizeof(char));
+				memset(answer, 0, 5 * sizeof(char));
+				strcat(answer, "OOBE");
+				answered = 1;
+			}
+			else {
+				Log_Debug("COMMANDINT: OOBE denied. Device is already configured.\n");
+				answer = malloc(5 * sizeof(char));
+				memset(answer, 0, 5 * sizeof(char));
+				strcat(answer, "ODEN");
+				answered = 1;
+			}
+		}
+		// Get Wi-Fi scanned network list
+		else if (!strcmp(currentCommand.header, "WISC")) {
+
+			Log_Debug("COMMANDINT: Command decoded as Wi-Fi scan request.\n");
+			int result;
+
+			// We get the number of networks.
+			result = WifiConfig_TriggerScanAndGetScannedNetworkCount();
+
+			// If there is an error...
+			if (result == -1) {
+				Log_Debug("COMMANDINT: Wi-Fi scan error: \"%s\".\n", strerror(errno));
+				answer = malloc(6 * sizeof(char));
+				memset(answer, 0, 6 * sizeof(char));
+				strcat(answer, "WISCE");
+				answered = 1;
+			}
+			// If there are no networks...
+			else if (result == 0) {
+				Log_Debug("COMMANDINT: Wi-Fi scan found no networks.\n");
+				answer = malloc(6 * sizeof(char));
+				memset(answer, 0, 6 * sizeof(char));
+				strcat(answer, "WISCN");
+				answered = 1;
+			}
+			// If there are networks...
+			else {
+
+				// Array of available networks
+				WifiConfig_ScannedNetwork networks[result];
+				WifiConfig_GetScannedNetworks(&networks, result);
+				
+				// 6 = WISCF + \n, result - 1 for separators (#)
+				int length = 6 + (result - 1);
+
+				// Then we add to length the length of every SSID
+				for (int i = 0; i < result; i++) {
+					length += networks[i].ssidLength;
+				}
+
+				// Allocating space for the answer
+				answer = (char*) malloc(length * sizeof(char));
+				memset(answer, 0, length * sizeof(char));
+				strcat(answer, "WISCF");
+
+				// Adds the scanned SSIDs to the answer
+				for (int i = 0; i < result; i++) {
+					strncat(answer, networks[i].ssid, networks[i].ssidLength);
+					answer[strlen(answer)] = '\0';
+
+					// Except the last time, we use a # as a separator
+					if (i != result - 1) {
+						strcat(answer, "#");
+					}
+				}
+
+				answered = 1;
+			}
 		}
 
 		// Answer with the requested data.

@@ -80,6 +80,9 @@ int initSocket() {
 	ServerIp.sin_port = htons(PORT_NUMBER);				// Port defined in TCPIO.h
 	ServerIp.sin_addr.s_addr = inet_addr(wlan_addr);	// Address is set to wlan0's address
 
+	// Reuse address (because it might still be used by the previous instance if the app crashed).
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1, sizeof(int));
+
 	// Try to bind sock and ServerIp
 	if (bind(sock, (struct sockaddr*) & ServerIp, sizeof(ServerIp)) == -1) {
 		Log_Debug("TCPIO: Socket binding failed. ERROR: \"%s\".\n", strerror(errno));
@@ -110,8 +113,6 @@ int receiveOne(char* _data) {
 
 buffer_t inputBuffer;
 buffer_t outputBuffer;
-
-int TCPexit;		// Variable shared between receive and send threads, in case closing the socket is not enough.
 
 ///////////// PUBLIC /////////////
 
@@ -184,7 +185,7 @@ void* TCPSendThread(void* _param) {
 
 	Log_Debug("TCPIO: TCP send thread started.\n");
 
-	while (!TCPexit) {
+	while (TCPThreadStatus == STATUS_RUNNING) {
 
 		// Skip if empty
 		if (outputBuffer.status != BUFFER_EMPTY) {
@@ -207,51 +208,62 @@ void* TCPSendThread(void* _param) {
 			send_all(client_conn, snd);
 		}
 	}
+
+	close(client_conn);
+	close(sock);
+	pthread_cancel(&receiveThread);
+	sleep(1);
+	Log_Debug("TCPIO: TCP thread closed. Last error was \"%s\".\n", strerror(errno));
+	TCPThreadStatus = STATUS_STOPPED;
 }
 
 void* TCPReceiveThread(void* _param) {
+
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	Log_Debug("TCPIO: TCP receive thread started.\n");
 
 	// Try starting the socket, exits immediately on fail. Waits until socket is open (blocking).
-	TCPexit = initSocket();
+	if (initSocket() == -1) {
+		TCPThreadStatus = STATUS_STOPPING;
+	}
+	else {
+		// Allow to run even if previously stopped. Setting this to 0 means the thread is running.
+		TCPThreadStatus = STATUS_RUNNING;
+	}
 
 	// When (and if) the socket is initialized, we also start sending data.
-	if (!TCPexit) {
+	if (TCPThreadStatus == STATUS_RUNNING) {
 		pthread_create(&sendThread, NULL, TCPSendThread, NULL);
 	}
 
-	while (!TCPexit) {
+	while (TCPThreadStatus == STATUS_RUNNING) {
 
 		// Receive
 		char rec;
 		int receiveResult = receiveOne(&rec);		// Receive a character (blocking)
 		if (receiveResult == 0) {					// When the connection closes
-			TCPexit = 1;
+			TCPThreadStatus = STATUS_STOPPING;
 			Log_Debug("TCPIO: Socket closed gracefully. Exiting now.\n");
 		}
 		else if (receiveResult == -1) {				// When there is an error
-			TCPexit = 1;
+			TCPThreadStatus = STATUS_STOPPING;
 			Log_Debug("TCPIO: Socket error. Exiting now. Details: \"%s\"\n", strerror(errno));
 		}
 		else {										// When correctly received
 			if (putCharBuffer(&inputBuffer, rec) == -1) {	// Push to buffer, if full...
-				TCPexit = 1;
+				TCPThreadStatus = STATUS_STOPPING;
 				Log_Debug("TCPIO: Input buffer was full. Exiting now.");
 			}
 		}
 	}
-
-	close(client_conn);
-	Log_Debug("TCPIO: TCP thread closed. Last error was \"%s\".\n", strerror(errno));
 }
 
 void startTCPThreads() {
 
 	Log_Debug("TCPIO: Starting threads.\n");
 
-	// Allow to run again if previously stopped.
-	TCPexit = 0;
+	TCPThreadStatus = STATUS_STARTING;
 
 	// Buffer initialization.
 	initCircBuffer(&inputBuffer, 1024);
@@ -268,5 +280,5 @@ void startTCPThreads() {
 }
 
 void stopTCPThreads() {
-	TCPexit = 1;
+	TCPThreadStatus = STATUS_STOPPING;
 }
