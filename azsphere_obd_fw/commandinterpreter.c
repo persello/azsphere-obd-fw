@@ -103,7 +103,7 @@ void* commandInterpreterThread(void* _param) {
 			Log_Debug("COMMANDINT: Command decoded as ping request.\n");
 			answer = malloc(5 * sizeof(char));
 			memset(answer, 0, 5 * sizeof(char));
-			strcat(answer, "PING");
+			strcpy(answer, "PING");
 			answered = 1;
 
 			// TODO: Add ping timer control
@@ -120,14 +120,14 @@ void* commandInterpreterThread(void* _param) {
 				isInOOBE = 1;
 				answer = malloc(5 * sizeof(char));
 				memset(answer, 0, 5 * sizeof(char));
-				strcat(answer, "OOBE");
+				strcpy(answer, "OOBE");
 				answered = 1;
 			}
 			else {
 				Log_Debug("COMMANDINT: OOBE denied. Device is already configured.\n");
-				answer = malloc(5 * sizeof(char));
-				memset(answer, 0, 5 * sizeof(char));
-				strcat(answer, "ODEN");
+				answer = malloc(6 * sizeof(char));
+				memset(answer, 0, 6 * sizeof(char));
+				strcpy(answer, "OOBEE");
 				answered = 1;
 			}
 		}
@@ -145,7 +145,7 @@ void* commandInterpreterThread(void* _param) {
 				Log_Debug("COMMANDINT: Wi-Fi scan error: \"%s\".\n", strerror(errno));
 				answer = malloc(6 * sizeof(char));
 				memset(answer, 0, 6 * sizeof(char));
-				strcat(answer, "WISCE");
+				strcpy(answer, "WISCE");
 				answered = 1;
 			}
 			// If there are no networks...
@@ -153,18 +153,20 @@ void* commandInterpreterThread(void* _param) {
 				Log_Debug("COMMANDINT: Wi-Fi scan found no networks.\n");
 				answer = malloc(6 * sizeof(char));
 				memset(answer, 0, 6 * sizeof(char));
-				strcat(answer, "WISCN");
+				strcpy(answer, "WISCN");
 				answered = 1;
 			}
 			// If there are networks...
 			else {
 
+				Log_Debug("COMMANDINT: Wi-Fi scan found %d networks.\n", result);
+
 				// Array of available networks
 				WifiConfig_ScannedNetwork networks[result];
 				WifiConfig_GetScannedNetworks(&networks, result);
-				
-				// 6 = WISCF + \n, result - 1 for separators (#)
-				int length = 6 + (result - 1);
+
+				// 6 = WISCF + \n, (result - 1) for separators (#), result for WPA indicators (*), (result * 5) for RSSI (-100) and separator (^)
+				int length = 6 + (result - 1) + result + (result * 5);
 
 				// Then we add to length the length of every SSID
 				for (int i = 0; i < result; i++) {
@@ -172,13 +174,25 @@ void* commandInterpreterThread(void* _param) {
 				}
 
 				// Allocating space for the answer
-				answer = (char*) malloc(length * sizeof(char));
+				answer = (char*)malloc(length * sizeof(char));
 				memset(answer, 0, length * sizeof(char));
-				strcat(answer, "WISCF");
+				strcpy(answer, "WISCF");
 
 				// Adds the scanned SSIDs to the answer
 				for (int i = 0; i < result; i++) {
+
+					if (networks[i].security == WifiConfig_Security_Wpa2_Psk) {
+						strcat(answer, "*");
+					}
+
 					strncat(answer, networks[i].ssid, networks[i].ssidLength);
+
+					// Adding RSSI information
+					char rssi[5];
+					sprintf(rssi, "^%d", networks[i].signalRssi);
+					strcat(answer, rssi);
+
+
 					answer[strlen(answer)] = '\0';
 
 					// Except the last time, we use a # as a separator
@@ -190,6 +204,198 @@ void* commandInterpreterThread(void* _param) {
 				answered = 1;
 			}
 		}
+		// Get saved Wi-Fi networks list
+		else if (!strcmp(currentCommand.header, "WISA")) {
+
+			Log_Debug("COMMANDINT: Command decoded as Wi-Fi saved networks request.\n");
+			int result;
+
+			// We get the number of networks saved.
+			result = WifiConfig_GetStoredNetworkCount();
+
+			// If there is an error...
+			if (result == -1) {
+				Log_Debug("COMMANDINT: Wi-Fi saved request error: \"%s\".\n", strerror(errno));
+				answer = malloc(6 * sizeof(char));
+				memset(answer, 0, 6 * sizeof(char));
+				strcpy(answer, "WISAE");
+				answered = 1;
+			}
+			// If there are no networks...
+			else if (result == 0) {
+				Log_Debug("COMMANDINT: No saved networks found.\n");
+				answer = malloc(6 * sizeof(char));
+				memset(answer, 0, 6 * sizeof(char));
+				strcpy(answer, "WISAN");
+				answered = 1;
+			}
+			// If there are networks...
+			else {
+
+				Log_Debug("COMMANDINT: There are %d saved Wi-Fi networks.\n", result);
+
+				// Array of available networks
+				WifiConfig_StoredNetwork networks[result];
+				WifiConfig_GetStoredNetworks(&networks, result);
+
+				// 6 = WISAF + \n + eventual connected and protection markers (^, *), result - 1 for separators (#)
+				int length = 7 + (2 * result) - 1;
+
+				// Then we add to length the length of every SSID
+				for (int i = 0; i < result; i++) {
+					length += networks[i].ssidLength;
+				}
+
+				// Allocating space for the answer
+				answer = (char*)malloc(length * sizeof(char));
+				memset(answer, 0, length * sizeof(char));
+				strcpy(answer, "WISAF");
+
+				// Adds the scanned SSIDs to the answer
+				for (int i = 0; i < result; i++) {
+
+					// Mark the connected one
+					if (networks[i].isConnected) {
+						strcat(answer, "^");
+					}
+
+					if (networks[i].security == WifiConfig_Security_Wpa2_Psk) {
+						strcat(answer, "*");
+					}
+
+					strncat(answer, networks[i].ssid, networks[i].ssidLength);
+					answer[strlen(answer)] = '\0';
+
+
+					// Except the last time, we use a # as a separator
+					if (i != result - 1) {
+						strcat(answer, "#");
+					}
+				}
+
+				answered = 1;
+			}
+		}
+		// Forget a Wi-Fi network
+		else if (!strcmp(currentCommand.header, "WIRM")) {
+
+			Log_Debug("COMMANDINT: Command decoded as Wi-Fi forget request.\n");
+			int result;
+
+			WifiConfig_StoredNetwork foundNetwork;
+
+			// We get the number of networks saved.
+			result = WifiConfig_GetStoredNetworkCount();
+
+			if (result > 0) {
+				// Then all the saved networks
+				WifiConfig_StoredNetwork networks[result];
+				WifiConfig_GetStoredNetworks(&networks, result);
+
+				// Search for a network with same SSID
+				for (int i = 0; i < result; i++) {
+
+					// If we have a match we save it. SSID property is not null-terminated.
+					if (!strncmp(currentCommand.arguments, networks[i].ssid, networks[i].ssidLength)) {
+						Log_Debug("COMMANDINT: Network to be forgotten was found.\n");
+						foundNetwork = networks[i];
+					}
+				}
+
+				// Try to remove
+				if (WifiConfig_ForgetNetwork(&foundNetwork) != -1) {
+
+					Log_Debug("COMMANDINT: Network forgotten successfully.\n");
+
+					// Removed
+					answer = (char*)malloc(5 * sizeof(char));
+					memset(answer, 0, 5 * sizeof(char));
+					strcpy(answer, "WIRM");
+					answered = 1;
+				}
+				else {
+
+					Log_Debug("COMMANDINT: Error while forgetting network. Error is \"%s\".\n", strerror(errno));
+
+					// Error
+					answer = (char*)malloc(6 * sizeof(char));
+					memset(answer, 0, 6 * sizeof(char));
+					strcpy(answer, "WIRME");
+					answered = 1;
+				}
+			}
+			else {
+
+				Log_Debug("COMMANDINT: No saved networks.\n");
+
+				// No networks saved
+				answer = (char*)malloc(6 * sizeof(char));
+				memset(answer, 0, 6 * sizeof(char));
+				strcpy(answer, "WIRME");
+				answered = 1;
+			}
+		}
+		// Add a Wi-Fi network
+		else if (!strcmp(currentCommand.header, "WIAD")) {
+
+			Log_Debug("COMMANDINT: Command decoded as Wi-Fi add request.\n");
+			int result;
+
+			if (strchr(currentCommand.arguments, '#') == NULL) {
+
+				Log_Debug("COMMANDINT: Adding open network \"%s\".\n", currentCommand.arguments);
+
+				// Open network
+				if (WifiConfig_StoreOpenNetwork(currentCommand.arguments, strlen(currentCommand.arguments)) == -1) {
+					Log_Debug("COMMANDINT: Error while adding open network. Error is \"%s\".\n", strerror(errno));
+					answer = (char*)malloc(6 * sizeof(char));
+					memset(answer, 0, 6 * sizeof(char));
+					strcpy(answer, "WIADE");
+					answered = 1;
+				}
+				else {
+					Log_Debug("COMMANDINT: Open network added successfully.\n");
+					answer = (char*)malloc(5 * sizeof(char));
+					memset(answer, 0, 5 * sizeof(char));
+					strcpy(answer, "WIAD");
+					answered = 1;
+				}
+
+			}
+			else {
+
+				// Protected network, # separates SSID and PSK
+				int tokenpos = strchr(currentCommand.arguments, '#') - currentCommand.arguments;
+
+				char* ssid = (char*)malloc((tokenpos + 1) * sizeof(char));
+				memset(ssid, 0, (tokenpos + 1) * sizeof(char));
+
+				char* password = (char*)malloc((strlen(currentCommand.arguments) - tokenpos) * sizeof(char));
+				memset(password, 0, (strlen(currentCommand.arguments) - tokenpos) * sizeof(char));
+
+				// Splitting
+				strcpy(ssid, strtok(currentCommand.arguments, "#"));
+				strcpy(password, strtok(NULL, "#"));
+
+				Log_Debug("COMMANDINT: Adding protected network with SSID \"%s\" (%d) and password \"%s\" (%d).\n", ssid, strlen(ssid), password, strlen(password));
+
+				if (WifiConfig_StoreWpa2Network(ssid, strlen(ssid), password, strlen(password)) == -1) {
+					Log_Debug("COMMANDINT: Error while adding protected network. Error is \"%s\".\n", strerror(errno));
+					answer = (char*)malloc(6 * sizeof(char));
+					memset(answer, 0, 6 * sizeof(char));
+					strcpy(answer, "WIADE");
+					answered = 1;
+				}
+				else {
+					Log_Debug("COMMANDINT: Protected network added successfully.\n");
+					answer = (char*)malloc(5 * sizeof(char));
+					memset(answer, 0, 5 * sizeof(char));
+					strcpy(answer, "WIAD");
+					answered = 1;
+				}
+			}
+		}
+
 
 		// Answer with the requested data.
 		// TODO: check results

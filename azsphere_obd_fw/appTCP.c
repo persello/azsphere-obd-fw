@@ -84,7 +84,7 @@ int initSocket() {
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1, sizeof(int));
 
 	// Try to bind sock and ServerIp
-	if (bind(sock, (struct sockaddr*) & ServerIp, sizeof(ServerIp)) == -1) {
+	if (bind(sock, (struct sockaddr*) &ServerIp, sizeof(ServerIp)) == -1) {
 		Log_Debug("TCPIO: Socket binding failed. ERROR: \"%s\".\n", strerror(errno));
 		return -1;
 	}
@@ -209,6 +209,7 @@ void* TCPSendThread(void* _param) {
 		}
 	}
 
+	shutdown(sock, 2);
 	close(client_conn);
 	close(sock);
 	pthread_cancel(&receiveThread);
@@ -219,6 +220,7 @@ void* TCPSendThread(void* _param) {
 
 void* TCPReceiveThread(void* _param) {
 
+	// Allow the thread to be halted while blocking
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	Log_Debug("TCPIO: TCP receive thread started.\n");
