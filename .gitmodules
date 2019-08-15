@@ -1,0 +1,3 @@
+[submodule "azsphere_obd_fw/ulibSD"]
+	path = azsphere_obd_fw/ulibSD
+	url = https://github.com/1nv1/ulibSD.git

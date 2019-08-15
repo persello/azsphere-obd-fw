@@ -15,7 +15,7 @@
 #include <applibs/log.h>
 
 #include "appTCP.h"
-#include "buffer.h"
+#include "lib/circularbuffer/buffer.h"
 #include "config.h"
 
 
@@ -66,7 +66,7 @@ int send_all(int _socket, char* _buffer)
 	return i;
 }
 
-int initSocket() {
+int initSocket(void) {
 
 	Log_Debug("TCPIO: TCP socket initialization started.\n");
 
@@ -107,7 +107,7 @@ int initSocket() {
 }
 
 int receiveOne(char* _data) {
-	int result = recv(client_conn, _data, 1, NULL);
+	int result = recv(client_conn, _data, 1, 0);
 	return result;
 }
 
@@ -132,7 +132,7 @@ int readTCPString(char* _data[]) {
 			break;
 		}
 
-		if (!(c == NULL || c == '\r' || c == '\n')) {
+		if (!(NULL == c || c == '\r' || c == '\n')) {
 			workingbuf[i] = c;
 			i++;
 		}
@@ -151,7 +151,7 @@ int readTCPString(char* _data[]) {
 
 int writeTCPString(char* _data) {
 
-	int length = strlen(_data);
+	size_t length = strlen(_data);
 
 	// This way we don't even put a \r\n on empty strings
 	if (length) {
@@ -212,10 +212,12 @@ void* TCPSendThread(void* _param) {
 	shutdown(sock, 2);
 	close(client_conn);
 	close(sock);
-	pthread_cancel(&receiveThread);
+	pthread_cancel(receiveThread);
 	sleep(1);
 	Log_Debug("TCPIO: TCP thread closed. Last error was \"%s\".\n", strerror(errno));
 	TCPThreadStatus = STATUS_STOPPED;
+
+	return NULL;
 }
 
 void* TCPReceiveThread(void* _param) {
@@ -259,6 +261,7 @@ void* TCPReceiveThread(void* _param) {
 			}
 		}
 	}
+	return NULL;
 }
 
 void startTCPThreads() {

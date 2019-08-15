@@ -25,7 +25,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <TargetSysroot>2</TargetSysroot>
+    <TargetSysroot>2+Beta1905</TargetSysroot>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -38,8 +38,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <UseMultiToolTask>false</UseMultiToolTask>
+    <LibraryPath>C:\Users\ricca\Projects\Azure Sphere\azsphere_obd_fw\azsphere_obd_fw\lib\circularbuffer;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="cardmanager.c" />
     <ClCompile Include="commandinterpreter.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="appTCP.c" />
@@ -47,14 +49,22 @@
     <UpToDateCheckInput Include="app_manifest.json" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="buffer.c" />
-    <ClInclude Include="buffer.h" />
+    <ClInclude Include="cardmanager.h" />
     <ClInclude Include="commandinterpreter.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="appTCP.h" />
+    <ClInclude Include="lib\ulibSD\integer.h" />
     <ClInclude Include="obdpids.h" />
     <ClInclude Include="obdserial.h" />
     <ClInclude Include="vehicleproperties.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="lib\circularbuffer\circularbuffer.vcxproj">
+      <Project>{a7e253a3-e5ca-4965-ae9c-0e3f65a709cf}</Project>
+    </ProjectReference>
+    <ProjectReference Include="lib\ulibSD\ulibsd\ulibsd.vcxproj">
+      <Project>{ce7e440d-1ba1-4aaa-b9b9-5cc981407b27}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
@@ -62,11 +72,15 @@
     <ClCompile>
       <AdditionalOptions>-Werror=implicit-function-declaration %(AdditionalOptions)</AdditionalOptions>
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</Verbose>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LibraryDependencies>applibs;pthread;gcc_s;c</LibraryDependencies>
       <AdditionalOptions>-Wl,--no-undefined -nodefaultlibs %(AdditionalOptions)</AdditionalOptions>
       <VerboseOutput Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</VerboseOutput>
+      <PrintMap Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">false</PrintMap>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</ShowProgress>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
 </Project>

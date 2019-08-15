@@ -6,7 +6,7 @@
 typedef struct {
 	int connected;
 	int initialized;
-	long baudRate;
+	UART_BaudRate_Type baudRate;
 	char name[100];
 	char details[100];
 	UART_Config uartConfig;
@@ -28,6 +28,6 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate);
 
 /// <summary> Initializes the module based on what defined in config.h. </summary>
 /// <returns> 0 if successful, -1 if not. </returns>
-int initStandardOBDModule();
+int initStandardOBDModule(void);
 
 //int sendOBDRequest(OBDRequest _request, char** result);

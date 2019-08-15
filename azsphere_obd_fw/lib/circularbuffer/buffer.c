@@ -1,3 +1,5 @@
+#include "buffer.h"
+
 #include <malloc.h>
 #include <string.h>
 
@@ -6,7 +8,7 @@
 	remember not to do this in other files and to revert back to the standard including
 	order when a better solution is available. */
 
-void initCircBuffer(buffer_t* _buffer, int _size) {
+void initCircBuffer(buffer_t* _buffer, size_t _size) {
 	_buffer->head = 0;
 	_buffer->tail = 0;
 	_buffer->size = _size;

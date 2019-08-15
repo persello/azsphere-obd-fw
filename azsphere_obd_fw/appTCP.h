@@ -5,10 +5,10 @@
 
 /// <summary> Starts the socket, waits for an incoming connection and then starts sending and
 /// receiving. Threaded, non-blocking. </summary>
-void startTCPThreads();
+void startTCPThreads(void);
 
 /// <summary> Stops the TCP send/receive threads and closes the socket. </summary>
-void stopTCPThreads();
+void stopTCPThreads(void);
 
 typedef enum {
 	STATUS_UNKNOWN,

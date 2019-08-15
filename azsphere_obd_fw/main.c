@@ -16,10 +16,16 @@
 #include "commandinterpreter.h"
 
 
-void TerminationHandler() {
+#include "lib/ulibSD/ulibsd/sd_io.h"
+
+
+static volatile sig_atomic_t terminationRequested = 0;
+
+void TerminationHandler(void) {
 	Log_Debug("MAIN: SIGTERM caught! Halting all the threads before exiting!\n");
 	stopCommandInterpreter();
 	stopTCPThreads();
+	terminationRequested = 1;
 	Log_Debug("MAIN: Threads stopped. Exiting from application.\n");
 }
 
@@ -52,6 +58,35 @@ int main(void)
 		return -1;
 	}
 
+	// Test for SD card initialization
+	SD_DEV dev[1];
+	switch (SD_Init(dev)) {
+	case SD_OK:
+		Log_Debug("MAIN: SD card initialized.\n");
+		break;
+	case SD_BUSY:
+		Log_Debug("MAIN: SD card is busy.\n");
+		break;
+	case SD_ERROR:
+		Log_Debug("MAIN: SD card error.\n");
+		break;
+	case SD_NOINIT:
+		Log_Debug("MAIN: SD card not initialized.\n");
+		break;
+	case SD_NORESPONSE:
+		Log_Debug("MAIN: SD card did not answer.\n");
+		break;
+	case SD_PARERR:
+		Log_Debug("MAIN: SD card parameter error.\n");
+		break;
+	case SD_REJECT:
+		Log_Debug("MAIN: SD card rejected data.\n");
+		break;
+	default:
+		Log_Debug("MAIN: SD card unknown result.\n");
+		break;
+	}
+
 	Log_Debug("MAIN: Starting all the threads.\n");
 
 	// The threads are initially stopped.
@@ -68,14 +103,13 @@ int main(void)
 
 	Log_Debug("MAIN: Initialization finished.\n");
 
-	struct timespec ts = { 0, 200000000 };
 	GPIO_Value_Type btnares;
 	GPIO_Value_Type btnaprev;
 	GPIO_Value_Type btnbres;
 	GPIO_Value_Type btnbprev;
 
 
-	while (1) {
+	while (!terminationRequested) {
 
 		GPIO_GetValue(btnafd, &btnares);
 		if (btnares == GPIO_Value_High && btnaprev == GPIO_Value_Low) {
@@ -97,4 +131,6 @@ int main(void)
 			startTCPThreads();
 		}
 	}
+
+	Log_Debug("MAIN: Application halted.\n");
 }

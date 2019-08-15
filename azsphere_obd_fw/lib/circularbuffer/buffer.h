@@ -26,7 +26,7 @@ typedef struct {
 
 } buffer_t;
 
-void initCircBuffer(buffer_t* _buffer, int _size);
+void initCircBuffer(buffer_t* _buffer, size_t _size);
 
 /// <summary> Adds a character to the buffer. </summary>
 /// <param name="_buffer"> The buffer in which to add the character. </param>
@@ -39,6 +39,3 @@ int putCharBuffer(buffer_t* _buffer, char _data);
 /// <param name="_data"> The variable in which the output is written. </param>
 /// <returns> 0 if successful, -1 if empty </returns>
 int getCharBuffer(buffer_t* _buffer, char* _data);
-
-// The only solution
-#include "buffer.c"

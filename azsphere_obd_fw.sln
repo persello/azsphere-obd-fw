@@ -4,6 +4,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.28809.33
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "azsphere_obd_fw", "azsphere_obd_fw\azsphere_obd_fw.vcxproj", "{95AE978D-9402-4ACF-B2C3-010546A353B8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF} = {A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ulibsd", "azsphere_obd_fw\lib\ulibSD\ulibsd\ulibsd.vcxproj", "{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "petitfatfs", "azsphere_obd_fw\lib\petitfatfs\petitfatfs\petitfatfs.vcxproj", "{C9FCCEC8-6E86-41E0-BA98-A86116970D7A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "circularbuffer", "azsphere_obd_fw\lib\circularbuffer\circularbuffer.vcxproj", "{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +24,16 @@ Global
 		{95AE978D-9402-4ACF-B2C3-010546A353B8}.Debug|ARM.Build.0 = Debug|ARM
 		{95AE978D-9402-4ACF-B2C3-010546A353B8}.Release|ARM.ActiveCfg = Release|ARM
 		{95AE978D-9402-4ACF-B2C3-010546A353B8}.Release|ARM.Build.0 = Release|ARM
+		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}.Debug|ARM.ActiveCfg = Debug|ARM
+		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}.Release|ARM.ActiveCfg = Release|ARM
+		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}.Release|ARM.Build.0 = Release|ARM
+		{C9FCCEC8-6E86-41E0-BA98-A86116970D7A}.Debug|ARM.ActiveCfg = Debug|ARM
+		{C9FCCEC8-6E86-41E0-BA98-A86116970D7A}.Debug|ARM.Build.0 = Debug|ARM
+		{C9FCCEC8-6E86-41E0-BA98-A86116970D7A}.Release|ARM.ActiveCfg = Release|ARM
+		{C9FCCEC8-6E86-41E0-BA98-A86116970D7A}.Release|ARM.Build.0 = Release|ARM
+		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}.Debug|ARM.ActiveCfg = Debug|ARM
+		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}.Release|ARM.ActiveCfg = Release|ARM
+		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}.Release|ARM.Build.0 = Release|ARM
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

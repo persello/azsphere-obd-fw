@@ -28,15 +28,12 @@
     <ClCompile Include="commandinterpreter.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cardmanager.c">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="buffer.c">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="buffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="appTCP.h">
@@ -52,6 +49,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="commandinterpreter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cardmanager.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\ulibSD\integer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
