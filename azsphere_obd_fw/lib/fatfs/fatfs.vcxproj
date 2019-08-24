@@ -11,18 +11,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="diskio.h" />
-    <ClInclude Include="pff.h" />
-    <ClInclude Include="pffconf.h" />
+    <ClCompile Include="diskio.c" />
+    <ClCompile Include="ff.c" />
+    <ClCompile Include="ffsystem.c" />
+    <ClCompile Include="ffunicode.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="diskio.c" />
-    <ClCompile Include="pff.c" />
+    <ClInclude Include="diskio.h" />
+    <ClInclude Include="ff.h" />
+    <ClInclude Include="ffconf.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{c9fccec8-6e86-41e0-ba98-a86116970d7a}</ProjectGuid>
+    <ProjectGuid>{7470474c-8f6d-45d3-a561-8fee2af1f17c}</ProjectGuid>
     <Keyword>AzureSphere</Keyword>
-    <RootNamespace>petitfatfs</RootNamespace>
+    <RootNamespace>fatfs</RootNamespace>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
     <ApplicationType>Linux</ApplicationType>
     <ApplicationTypeRevision>1.0</ApplicationTypeRevision>

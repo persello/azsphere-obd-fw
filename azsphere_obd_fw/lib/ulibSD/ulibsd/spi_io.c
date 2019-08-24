@@ -56,6 +56,8 @@ void SPI_Init(void) {
 	}
 }
 
+// The function SPI_RW has been removed in favour of two separate functions
+// This is due to the fact that full-duplex communication is not supported
 BYTE SPI_Read() {
 
 	BYTE result;
@@ -84,6 +86,7 @@ void SPI_Write(BYTE d) {
 	SPIMaster_TransferSequential(SPIfd, transfer, 1);
 }
 
+// These two functions are built in order to leave the MISO line high between bytes
 void SPI_SendCommand(BYTE data[6]) {
 	SPIMaster_Transfer transfer[1];
 
@@ -96,6 +99,8 @@ void SPI_SendCommand(BYTE data[6]) {
 	SPIMaster_TransferSequential(SPIfd, transfer, 1);
 }
 
+// Same as before, but this simply puts the MISO line high and gives 80 clock cycles on SCK
+// Minimun 74 cycles for entering SPI mode
 void SPI_80Clocks() {
 	SPIMaster_Transfer transfer[1];
 
@@ -111,9 +116,11 @@ void SPI_80Clocks() {
 }
 
 void SPI_Release(void) {
+	// Maybe not? Needs testing.
 	close(SPIfd);
 }
 
+// The CS line we use here is an external CS pin (not the ISU one) because independent CS control is not allowed
 inline void SPI_CS_Low(void) {
 	if (GPIO_SetValue(csfd, GPIO_Value_Low) != 0) {
 		Log_Debug("SPIIO: Cannot pull down CS line. Details: \"%s\".\n", strerror(errno));
