@@ -11,22 +11,18 @@
 
 
 #include "appTCP.h"
-#include "obdserial.h"
-#include "config.h"
+#include "cardmanager.h"
 #include "commandinterpreter.h"
+#include "config.h"
+#include "obdserial.h"
 
-
-#include "lib/fatfs/ff.h"
 
 
 static volatile sig_atomic_t terminationRequested = 0;
 
 void TerminationHandler(void) {
 	Log_Debug("MAIN: SIGTERM caught! Halting all the threads before exiting!\n");
-	stopCommandInterpreter();
-	stopTCPThreads();
 	terminationRequested = 1;
-	Log_Debug("MAIN: Threads stopped. Exiting from application.\n");
 }
 
 int main(void)
@@ -40,7 +36,12 @@ int main(void)
 	action.sa_handler = TerminationHandler;
 	sigaction(SIGTERM, &action, NULL);
 
-	Log_Debug("MAIN: SIGTERM handler registered, initializing GPIOs.\n");
+	Log_Debug("MAIN: SIGTERM handler registered, initializing SD card.\n");
+
+	// FAT File Sytem Initialization
+	initializeSD();
+
+	Log_Debug("MAIN: Initializing GPIOs.\n");
 
 	// GPIO initialization
 	int btnafd = GPIO_OpenAsInput(PIN_BTN_A);
@@ -58,16 +59,6 @@ int main(void)
 		return -1;
 	}
 
-	FATFS card;
-	// Mount SD card. 1 = Mount now.
-	FRESULT res = f_mount(&card, "", 1);
-
-	if (res == FR_OK) {
-		Log_Debug("MAIN: SD mounted successfully.\n");
-	}
-	else {
-		Log_Debug("MAIN: SD mount error. Error code is %d.\n", res);
-	}
 
 	Log_Debug("MAIN: Starting all the threads.\n");
 
@@ -113,6 +104,13 @@ int main(void)
 			startTCPThreads();
 		}
 	}
+
+	stopCommandInterpreter();
+	stopTCPThreads();
+	if (&currentFile) f_close(&currentFile);
+	stopSD();
+
+	Log_Debug("MAIN: Services stopped. Exiting from application.\n");
 
 	Log_Debug("MAIN: Application halted.\n");
 }

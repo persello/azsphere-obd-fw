@@ -279,9 +279,13 @@ SDRESULTS SD_Init(SD_DEV* dev)
 		SPI_Timer_Off();
 
 		dev->mount = FALSE;
-		SPI_Timer_On(500);
-		while ((__SD_Send_Cmd(CMD0, 0) != 1) && (SPI_Timer_Status() == TRUE));
-		SPI_Timer_Off();
+
+		int count = 0;
+		while ((__SD_Send_Cmd(CMD0, 0) != 1) && (count < 1000)) {
+			count++;
+		};
+
+
 		// Idle state
 		if (__SD_Send_Cmd(CMD0, 0) == 1) {
 			// SD version 2?
@@ -448,7 +452,7 @@ SDRESULTS SD_Status(SD_DEV* dev)
 #if defined(_M_IX86)
 	return((dev->fp == NULL) ? SD_OK : SD_NORESPONSE);
 #else
-	return(__SD_Send_Cmd(CMD0, 0) ? SD_OK : SD_NORESPONSE);
+	//return(__SD_Send_Cmd(CMD0, 0) ? SD_OK : SD_NORESPONSE);
 #endif
 }
 

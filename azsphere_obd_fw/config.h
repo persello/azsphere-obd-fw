@@ -26,7 +26,13 @@
 #define SD_CARD_CS_NAME	MT3620_SPI_CHIP_SELECT_B		// Use MT3620_SPI_CHIP_SELECT_A for slot 1, not used
 #define SD_CARD_SPEED	2000000							// Based on your SD card's maximum speed
 
-#define FW_VER			"0.1.1"
+#define FW_VER			"0.1.2"
 
-// 0.1.0: Base alpha FW
-// 0.1.1: SD card mounted, basic SD I/O
+// 0.1.0: Base alpha FW.
+// 0.1.1: SD card mounted, basic SD I/O.
+// 0.1.2: SD card mounted as full FAT/exFAT file system.
+
+
+// TARGET: 0.2: SD card data logger.
+// TARGET: 0.3: OBD message logging. GPS interpreter.
+// TARGET: 1.0: Log transmission to app.

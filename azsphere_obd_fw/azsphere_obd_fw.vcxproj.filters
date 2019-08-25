@@ -29,7 +29,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cardmanager.c">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -51,10 +51,10 @@
     <ClInclude Include="commandinterpreter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cardmanager.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="lib\ulibSD\integer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cardmanager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
