@@ -24,7 +24,7 @@
 #define SD_CARD_SPI		MT3620_SPI_ISU1
 #define SD_CARD_CS_PIN	17								// Use 16 for slot 1. This is the real CS pin.
 #define SD_CARD_CS_NAME	MT3620_SPI_CHIP_SELECT_B		// Use MT3620_SPI_CHIP_SELECT_A for slot 1, not used
-#define SD_CARD_SPEED	20000000						// Based on your SD card's maximum speed
+#define SD_CARD_SPEED	2000000							// Based on your SD card's maximum speed
 
 #define FW_VER			"0.1.1"
 

@@ -22,6 +22,8 @@
 #ifndef FF_DEFINED
 #define FF_DEFINED	86604	/* Revision ID */
 
+#include <malloc.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

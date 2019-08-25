@@ -117,7 +117,7 @@ void SPI_80Clocks() {
 
 void SPI_Release(void) {
 	// Maybe not? Needs testing.
-	close(SPIfd);
+	//close(SPIfd);
 }
 
 // The CS line we use here is an external CS pin (not the ISU one) because independent CS control is not allowed

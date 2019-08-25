@@ -62,6 +62,9 @@
     <ProjectReference Include="lib\circularbuffer\circularbuffer.vcxproj">
       <Project>{a7e253a3-e5ca-4965-ae9c-0e3f65a709cf}</Project>
     </ProjectReference>
+    <ProjectReference Include="lib\fatfs\fatfs.vcxproj">
+      <Project>{7470474c-8f6d-45d3-a561-8fee2af1f17c}</Project>
+    </ProjectReference>
     <ProjectReference Include="lib\ulibSD\ulibsd\ulibsd.vcxproj">
       <Project>{ce7e440d-1ba1-4aaa-b9b9-5cc981407b27}</Project>
     </ProjectReference>

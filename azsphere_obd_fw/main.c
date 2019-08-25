@@ -16,7 +16,7 @@
 #include "commandinterpreter.h"
 
 
-#include "lib/ulibSD/ulibsd/sd_io.h"
+#include "lib/fatfs/ff.h"
 
 
 static volatile sig_atomic_t terminationRequested = 0;
@@ -58,33 +58,15 @@ int main(void)
 		return -1;
 	}
 
-	// Test for SD card initialization
-	SD_DEV dev[1];
-	switch (SD_Init(dev)) {
-	case SD_OK:
-		Log_Debug("MAIN: SD card initialized.\n");
-		break;
-	case SD_BUSY:
-		Log_Debug("MAIN: SD card is busy.\n");
-		break;
-	case SD_ERROR:
-		Log_Debug("MAIN: SD card error.\n");
-		break;
-	case SD_NOINIT:
-		Log_Debug("MAIN: SD card not initialized.\n");
-		break;
-	case SD_NORESPONSE:
-		Log_Debug("MAIN: SD card did not answer.\n");
-		break;
-	case SD_PARERR:
-		Log_Debug("MAIN: SD card parameter error.\n");
-		break;
-	case SD_REJECT:
-		Log_Debug("MAIN: SD card rejected data.\n");
-		break;
-	default:
-		Log_Debug("MAIN: SD card unknown result.\n");
-		break;
+	FATFS card;
+	// Mount SD card. 1 = Mount now.
+	FRESULT res = f_mount(&card, "", 1);
+
+	if (res == FR_OK) {
+		Log_Debug("MAIN: SD mounted successfully.\n");
+	}
+	else {
+		Log_Debug("MAIN: SD mount error. Error code is %d.\n", res);
 	}
 
 	Log_Debug("MAIN: Starting all the threads.\n");

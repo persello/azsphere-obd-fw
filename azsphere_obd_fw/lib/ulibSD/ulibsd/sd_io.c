@@ -225,9 +225,14 @@ DWORD __SD_Sectors(SD_DEV* dev)
 			C_SIZE_MULT = 0;
 		}
 		ss = (C_SIZE + 1);
-		ss *= __SD_Power_Of_Two(C_SIZE_MULT + 2);
+		/*ss *= __SD_Power_Of_Two(C_SIZE_MULT + 2);
 		ss *= __SD_Power_Of_Two(READ_BL_LEN);
-		ss /= SD_BLK_SIZE;
+		ss /= SD_BLK_SIZE;*/
+
+		// Simple SDHC patch
+		// TODO: This way, normal SD cards won't work. Fix this.
+		ss *= 1024;
+
 		return (ss);
 	}
 	else return (0); // Error
@@ -367,7 +372,7 @@ SDRESULTS SD_Read(SD_DEV* dev, void* dat, DWORD sector, WORD ofs, WORD cnt)
 	res = SD_ERROR;
 	if ((sector > dev->last_sector) || (cnt == 0)) return(SD_PARERR);
 	// Convert sector number to byte address (sector * SD_BLK_SIZE)
-	if (__SD_Send_Cmd(CMD17, sector * SD_BLK_SIZE) == 0) {
+	if (__SD_Send_Cmd(CMD17, sector /** SD_BLK_SIZE*/) == 0) {							// TODO: Correct this quick SDHC patch.
 		SPI_Timer_On(100);  // Wait for data packet (timeout of 100ms)
 		do {
 			tkn = SPI_Read();
@@ -430,7 +435,7 @@ SDRESULTS SD_Write(SD_DEV* dev, void* dat, DWORD sector)
 	if (sector > dev->last_sector) return(SD_PARERR);
 	// Single block write (token <- 0xFE)
 	// Convert sector number to bytes address (sector * SD_BLK_SIZE)
-	if (__SD_Send_Cmd(CMD24, sector * SD_BLK_SIZE) == 0)
+	if (__SD_Send_Cmd(CMD24, sector /** SD_BLK_SIZE*/) == 0)							// TODO: Correct this quick SDHC patch.
 		return(__SD_Write_Block(dev, dat, 0xFE));
 	else
 		return(SD_ERROR);

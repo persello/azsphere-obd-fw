@@ -13,6 +13,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "circularbuffer", "azsphere_obd_fw\lib\circularbuffer\circularbuffer.vcxproj", "{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fatfs", "azsphere_obd_fw\lib\fatfs\fatfs.vcxproj", "{7470474C-8F6D-45D3-A561-8FEE2AF1F17C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27} = {CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,9 +28,11 @@ Global
 		{95AE978D-9402-4ACF-B2C3-010546A353B8}.Release|ARM.ActiveCfg = Release|ARM
 		{95AE978D-9402-4ACF-B2C3-010546A353B8}.Release|ARM.Build.0 = Release|ARM
 		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}.Debug|ARM.ActiveCfg = Debug|ARM
+		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}.Debug|ARM.Build.0 = Debug|ARM
 		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}.Release|ARM.ActiveCfg = Release|ARM
 		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}.Release|ARM.Build.0 = Release|ARM
 		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}.Debug|ARM.ActiveCfg = Debug|ARM
+		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}.Debug|ARM.Build.0 = Debug|ARM
 		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}.Release|ARM.ActiveCfg = Release|ARM
 		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}.Release|ARM.Build.0 = Release|ARM
 		{7470474C-8F6D-45D3-A561-8FEE2AF1F17C}.Debug|ARM.ActiveCfg = Debug|ARM
