@@ -23,12 +23,14 @@
 #define FF_DEFINED	86604	/* Revision ID */
 
 #include <malloc.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "ffconf.h"		/* FatFs configuration options */
+#include "../ulibSD/ulibsd/sd.h" // SD Interface functions
 
 #if FF_DEFINED != FFCONF_DEF
 #error Wrong configuration file (ffconf.h).

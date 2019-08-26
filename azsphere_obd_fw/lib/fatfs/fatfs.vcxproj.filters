@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="diskio.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ff.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -29,9 +26,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="diskio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ff.h">
       <Filter>Header Files</Filter>
     </ClInclude>
