@@ -8,8 +8,15 @@
 #ifndef _SPI_IO_H_
 #define _SPI_IO_H_
 
-#include "integer.h"        /* Type redefinition for portability */
+#include "../../fatfs/ff.h"        /* Type redefinition for portability */
 
+#include <stdint.h>
+typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */
+typedef unsigned char	BYTE;	/* char must be 8-bit */
+typedef uint16_t		WORD;	/* 16-bit unsigned integer */
+typedef uint16_t		WCHAR;	/* 16-bit unsigned integer */
+typedef uint32_t		DWORD;	/* 32-bit unsigned integer */
+typedef uint64_t		QWORD;	/* 64-bit unsigned integer */
 
 
 /******************************************************************************
@@ -22,12 +29,12 @@
 void SPI_Init (void);
 
 /**
-	\brief Writes a byte
+	\brief Reads a BYTE
  */
 BYTE SPI_Read(void);
 
 /**
-	\brief Reads a byte
+	\brief Writes a BYTE
  */
 void SPI_Write(BYTE d);
 
@@ -37,7 +44,7 @@ void SPI_Write(BYTE d);
 void SPI_80Clocks(void);
 
 /**
-	\brief Sends 6 bytes continuously (New function)
+	\brief Sends 6 BYTEs continuously (New function)
 */
 void SPI_SendCommand(BYTE data[6]);
 
@@ -76,7 +83,7 @@ void SPI_Timer_On (WORD ms, int timer);
     \brief Check the status of non-blocking timer.
     \return Status, TRUE if timeout is not reach yet.
  */
-BOOL SPI_Timer_Status (int timer);
+bool SPI_Timer_Status (int timer);
 
 /**
     \brief Stop of non-blocking timer. Mandatory.

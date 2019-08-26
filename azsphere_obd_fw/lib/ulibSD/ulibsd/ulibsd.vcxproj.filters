@@ -15,21 +15,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="integer.h">
+    <ClInclude Include="spi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sd_io.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="spi_io.h">
+    <ClInclude Include="sd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sd_io.c">
+    <ClCompile Include="sd.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="spi_io.c">
+    <ClCompile Include="spi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -107,8 +107,8 @@
 /   3: Enable LFN with dynamic working buffer on the HEAP.
 /
 /  To enable the LFN, ffunicode.c needs to be added to the project. The LFN function
-/  requiers certain internal working buffer occupies (FF_MAX_LFN + 1) * 2 bytes and
-/  additional (FF_MAX_LFN + 44) / 15 * 32 bytes when exFAT is enabled.
+/  requiers certain internal working buffer occupies (FF_MAX_LFN + 1) * 2 BYTEs and
+/  additional (FF_MAX_LFN + 44) / 15 * 32 BYTEs when exFAT is enabled.
 /  The FF_MAX_LFN defines size of the working buffer in UTF-16 code unit and it can
 /  be in range of 12 to 255. It is recommended to be set 255 to fully support LFN
 /  specification.
@@ -225,7 +225,7 @@
 
 #define FF_FS_TINY		0
 /* This option switches tiny buffer configuration. (0:Normal or 1:Tiny)
-/  At the tiny configuration, size of file object (FIL) is shrinked FF_MAX_SS bytes.
+/  At the tiny configuration, size of file object (FIL) is shrinked FF_MAX_SS BYTEs.
 /  Instead of private sector buffer eliminated from the file object, common sector
 /  buffer in the filesystem object (FATFS) is used for the file data transfer. */
 

@@ -11,13 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="integer.h" />
-    <ClInclude Include="sd_io.h" />
-    <ClInclude Include="spi_io.h" />
+    <ClInclude Include="sd.h" />
+    <ClInclude Include="spi.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="sd_io.c" />
-    <ClCompile Include="spi_io.c" />
+    <ClCompile Include="sd.c" />
+    <ClCompile Include="spi.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ce7e440d-1ba1-4aaa-b9b9-5cc981407b27}</ProjectGuid>
@@ -32,6 +31,7 @@
     <PlatformToolset>GCC_AzureSphere_1_0</PlatformToolset>
     <ProjectPublicIncludePath>$(MSBuildProjectDirectory)\Inc\Public</ProjectPublicIncludePath>
     <PublicIncludePath>$(MSBuildProjectDirectory)\Inc\Public</PublicIncludePath>
+    <ProjectName>sdlib</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">

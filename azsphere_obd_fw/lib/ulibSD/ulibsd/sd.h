@@ -1,3 +1,5 @@
+#pragma once
+
 /*-----------------------------------------------------------------------/
 /  Low level disk interface modlue include file   (C)ChaN, 2014          /
 /-----------------------------------------------------------------------*/
@@ -5,35 +7,51 @@
 #ifndef _DISKIO_DEFINED
 #define _DISKIO_DEFINED
 
+#include "spi.h"
+
+#define CT_SD1		0x00
+#define CT_SD2		0x01
+#define CT_BLOCK	0x02
+#define CT_MMC		0x03
+#define CT_SDC		0x04
+
+#include <stdint.h>
+typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */
+typedef unsigned char	BYTE;	/* char must be 8-bit */
+typedef uint16_t		WORD;	/* 16-bit unsigned integer */
+typedef uint16_t		WCHAR;	/* 16-bit unsigned integer */
+typedef uint32_t		DWORD;	/* 32-bit unsigned integer */
+typedef uint64_t		QWORD;	/* 64-bit unsigned integer */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Status of Disk Functions */
-typedef BYTE	DSTATUS;
+	/* Status of Disk Functions */
+	typedef BYTE	DSTATUS;
 
-/* Results of Disk Functions */
-typedef enum {
-	RES_OK = 0,		/* 0: Successful */
-	RES_ERROR,		/* 1: R/W Error */
-	RES_WRPRT,		/* 2: Write Protected */
-	RES_NOTRDY,		/* 3: Not Ready */
-	RES_PARERR		/* 4: Invalid Parameter */
-} DRESULT;
-
-
-/*---------------------------------------*/
-/* Prototypes for disk control functions */
+	/* Results of Disk Functions */
+	typedef enum {
+		RES_OK = 0,		/* 0: Successful */
+		RES_ERROR,		/* 1: R/W Error */
+		RES_WRPRT,		/* 2: Write Protected */
+		RES_NOTRDY,		/* 3: Not Ready */
+		RES_PARERR		/* 4: Invalid Parameter */
+	} DRESULT;
 
 
-DSTATUS disk_initialize (BYTE pdrv);
-DSTATUS disk_status (BYTE pdrv);
-DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
-DRESULT disk_write (BYTE pdrv, const BYTE* buff, DWORD sector, UINT count);
-DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
+	/*---------------------------------------*/
+	/* Prototypes for disk control functions */
 
 
-/* Disk Status Bits (DSTATUS) */
+	DSTATUS disk_initialize(BYTE pdrv);
+	DSTATUS disk_status(BYTE pdrv);
+	DRESULT disk_read(BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
+	DRESULT disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, UINT count);
+	DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff);
+
+
+	/* Disk Status Bits (DSTATUS) */
 
 #define STA_NOINIT		0x01	/* Drive not initialized */
 #define STA_NODISK		0x02	/* No medium in the drive */

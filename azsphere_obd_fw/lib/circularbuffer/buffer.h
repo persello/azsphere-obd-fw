@@ -12,10 +12,10 @@ typedef struct {
 	/// <summary> The content of the circular buffer. </summary>
 	char* content;
 
-	/// <summary> The first free byte of the buffer. </summary>
+	/// <summary> The first free BYTE of the buffer. </summary>
 	size_t head;
 
-	/// <summary> The last used byte of the buffer. </summary>
+	/// <summary> The last used BYTE of the buffer. </summary>
 	size_t tail;
 
 	/// <summary> The size of the circular buffer. </summary>

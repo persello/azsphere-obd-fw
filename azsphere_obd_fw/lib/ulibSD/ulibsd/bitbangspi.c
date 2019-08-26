@@ -20,18 +20,17 @@
 
 #include "../../../config.h"
 
-#include "spi_io.h"
+#include "spi.h"
 
  /******************************************************************************
   Module Public Functions - Low level SPI control functions
  ******************************************************************************/
 
 SPIMaster_Config config;
-int SPIfd = -1;
-int csfd = -1;
+int SPIfd = 0;
+int csfd = 0;
 
 void SPI_Init(void) {
-	Log_Debug("SPIIO: Initializing SPI bus for SD card.\n");
 	if (SPIMaster_InitConfig(&config) != 0) {
 		Log_Debug("SPIIO: Unable to initialize SPI configuration. Details: \"%s\".\n", strerror(errno));
 	}
@@ -39,18 +38,20 @@ void SPI_Init(void) {
 	config.csPolarity = SPI_ChipSelectPolarity_ActiveLow;
 
 	// Open the SPI bus
-	SPIfd = SPIMaster_Open(SD_CARD_SPI, SD_CARD_CS_NAME, &config);
-	if (SPIfd == -1) {
-		Log_Debug("SPIIO: Error while opening SPI file descriptor. Details: \"%s\".\n", strerror(errno));
-	}
-	else {
-		Log_Debug("SPIIO: File descriptor for SPI (%d) created successfully.\n", SPIfd);
+	if (!SPIfd) {
+		SPIfd = SPIMaster_Open(SD_CARD_SPI, SD_CARD_CS_NAME, &config);
+		if (SPIfd <= 0) {
+			Log_Debug("SPIIO: Error while opening SPI file descriptor. Details: \"%s\".\n", strerror(errno));
+		}
+		else {
+			Log_Debug("SPIIO: File descriptor for SPI (%d) created successfully.\n", SPIfd);
+		}
 	}
 
 	// Override the control for the CS pin
-	if (csfd == -1) {
+	if (!csfd) {
 		csfd = GPIO_OpenAsOutput(SD_CARD_CS_PIN, GPIO_OutputMode_PushPull, GPIO_Value_Low);
-		if (csfd < 0) {
+		if (csfd <= 0) {
 			Log_Debug("SPIIO: Error opening CS: %s.\n", strerror(errno));
 		}
 	}
@@ -86,7 +87,7 @@ void SPI_Write(BYTE d) {
 	SPIMaster_TransferSequential(SPIfd, transfer, 1);
 }
 
-// These two functions are built in order to leave the MISO line high between bytes
+// These two functions are built in order to leave the MISO line high between BYTEs
 void SPI_SendCommand(BYTE data[6]) {
 	SPIMaster_Transfer transfer[1];
 
@@ -159,7 +160,7 @@ void SPI_Timer_On(WORD ms, int timer) {
 }
 
 
-inline BOOL SPI_Timer_Status(int timer) {
+inline bool SPI_Timer_Status(int timer) {
 
 	// Timer is disabled
 	if (period[timer] == 0) {
@@ -169,12 +170,12 @@ inline BOOL SPI_Timer_Status(int timer) {
 
 		// Timer has expired
 		if (millis() > started[timer] + period[timer]) {
-			lastStatus[timer] = FALSE;
-			return FALSE;
+			lastStatus[timer] = false;
+			return false;
 		}
 		else {
-			lastStatus[timer] = TRUE;
-			return TRUE;
+			lastStatus[timer] = true;
+			return true;
 		}
 	}
 }
