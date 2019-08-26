@@ -37,8 +37,20 @@
 /*-------------------------------------------------------------------------*/
 
 
-#define	CS_H()		SPI_CS_High()
-#define CS_L()		SPI_CS_Low()
+#define DO_INIT()	SPI_MISO_Init()				/* Initialize port for MMC DO as input */
+#define DO			SPI_MISO_Get()	/* Test for MMC DO ('H':true, 'L':false) */
+
+#define DI_INIT()	SPI_MOSI_Init()	/* Initialize port for MMC DI as output */
+#define DI_H()		SPI_MOSI_Set(1)	/* Set MMC DI "high" */
+#define DI_L()		SPI_MOSI_Set(0)	/* Set MMC DI "low" */
+
+#define CK_INIT()	SPI_SCK_Init()	/* Initialize port for MMC SCLK as output */
+#define CK_H()		SPI_SCK_Set(1)	/* Set MMC SCLK "high" */
+#define	CK_L()		SPI_SCK_Set(0)	/* Set MMC SCLK "low" */
+
+#define CS_INIT()	SPI_CS_Init()	/* Initialize port for MMC CS as output */
+#define	CS_H()		SPI_CS_Set(1)	/* Set MMC CS "high" */
+#define CS_L()		SPI_CS_Set(0)	/* Set MMC CS "low" */
 
 
 static
@@ -94,42 +106,77 @@ BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
 
 
 /*-----------------------------------------------------------------------*/
-/* Transmit BYTEs to the card (bitbanging)                               */
+/* Transmit bytes to the card (bitbanging)                               */
 /*-----------------------------------------------------------------------*/
 
 static
 void xmit_mmc(
 	const BYTE* buff,	/* Data to be sent */
-	UINT bc				/* Number of BYTEs to send */
+	UINT bc				/* Number of bytes to send */
 )
 {
 	BYTE d;
 
+
 	do {
-		d = *buff++;	/* Get a BYTE to be sent */
-		SPI_Write(d);
+		d = *buff++;	/* Get a byte to be sent */
+		if (d & 0x80) DI_H(); else DI_L();	/* bit7 */
+		CK_H(); CK_L();
+		if (d & 0x40) DI_H(); else DI_L();	/* bit6 */
+		CK_H(); CK_L();
+		if (d & 0x20) DI_H(); else DI_L();	/* bit5 */
+		CK_H(); CK_L();
+		if (d & 0x10) DI_H(); else DI_L();	/* bit4 */
+		CK_H(); CK_L();
+		if (d & 0x08) DI_H(); else DI_L();	/* bit3 */
+		CK_H(); CK_L();
+		if (d & 0x04) DI_H(); else DI_L();	/* bit2 */
+		CK_H(); CK_L();
+		if (d & 0x02) DI_H(); else DI_L();	/* bit1 */
+		CK_H(); CK_L();
+		if (d & 0x01) DI_H(); else DI_L();	/* bit0 */
+		CK_H(); CK_L();
 	} while (--bc);
 }
 
 
 
 /*-----------------------------------------------------------------------*/
-/* Receive BYTEs from the card (bitbanging)                              */
+/* Receive bytes from the card (bitbanging)                              */
 /*-----------------------------------------------------------------------*/
 
 static
 void rcvr_mmc(
 	BYTE* buff,	/* Pointer to read buffer */
-	UINT bc		/* Number of BYTEs to receive */
+	UINT bc		/* Number of bytes to receive */
 )
 {
 	BYTE r;
 
+
+	DI_H();	/* Send 0xFF */
+
 	do {
-		r = SPI_Read();
-		*buff++ = r;			/* Store a received BYTE */
+		r = 0;	 if (DO) r++;	/* bit7 */
+		CK_H(); CK_L();
+		r <<= 1; if (DO) r++;	/* bit6 */
+		CK_H(); CK_L();
+		r <<= 1; if (DO) r++;	/* bit5 */
+		CK_H(); CK_L();
+		r <<= 1; if (DO) r++;	/* bit4 */
+		CK_H(); CK_L();
+		r <<= 1; if (DO) r++;	/* bit3 */
+		CK_H(); CK_L();
+		r <<= 1; if (DO) r++;	/* bit2 */
+		CK_H(); CK_L();
+		r <<= 1; if (DO) r++;	/* bit1 */
+		CK_H(); CK_L();
+		r <<= 1; if (DO) r++;	/* bit0 */
+		CK_H(); CK_L();
+		*buff++ = r;			/* Store a received byte */
 	} while (--bc);
 }
+
 
 
 
@@ -145,7 +192,6 @@ int wait_ready(void)	/* 1:OK, 0:Timeout */
 
 
 	for (tmr = 5000; tmr; tmr--) {	/* Wait for ready in timeout of 500ms */
-		SPI_Write(0xFF);
 		rcvr_mmc(&d, 1);
 		if (d == 0xFF) break;
 		dly_us(100);
@@ -284,7 +330,7 @@ BYTE send_cmd(		/* Returns command response (bit7==1:Send failed)*/
 	if (cmd == CMD0) n = 0x95;		/* (valid CRC for CMD0(0)) */
 	if (cmd == CMD8) n = 0x87;		/* (valid CRC for CMD8(0x1AA)) */
 	buf[5] = n;
-	SPI_SendCommand(buf);
+	xmit_mmc(buf, 6);
 
 	/* Receive command response */
 	if (cmd == CMD12) rcvr_mmc(&d, 1);	/* Skip a stuff BYTE when stop reading */
@@ -335,13 +381,13 @@ DSTATUS disk_initialize(
 
 	if (drv) return RES_NOTRDY;
 
-	SPI_Init();
-	SPI_Freq_Low();
-
 	dly_us(10000);			/* 10ms */
-	CS_H();		/* Initialize port pin tied to CS */
+	CS_INIT(); CS_H();		/* Initialize port pin tied to CS */
+	CK_INIT(); CK_L();		/* Initialize port pin tied to SCLK */
+	DI_INIT();				/* Initialize port pin tied to DI */
+	DO_INIT();				/* Initialize port pin tied to DO */
 
-	SPI_80Clocks();
+	for (n = 10; n; n--) rcvr_mmc(buf, 1);	/* Apply 80 dummy clocks and the card gets ready to receive command */
 
 	ty = 0;
 	if (send_cmd(CMD0, 0) == 1) {			/* Enter Idle state */

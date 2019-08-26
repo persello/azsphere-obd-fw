@@ -156,11 +156,13 @@ void* SDThreadMain(void* _param) {
 			mountSD();
 		}
 		else {
+
 			if (fileopened) {
 
 				// When the file is opened...
 
 				// Sync the changes to the SD card for safety reasons.
+				// Also serves as SD insertion check (unmounts on fail).
 				if (f_sync(&currentFile) != FR_OK) {
 					unmountSD();
 				}

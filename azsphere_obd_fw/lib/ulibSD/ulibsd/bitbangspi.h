@@ -8,110 +8,15 @@
 #ifndef _SPI_IO_H_
 #define _SPI_IO_H_
 
-#include "../../fatfs/ff.h"        /* Type redefinition for portability */
+void SPI_MOSI_Init(void);
+void SPI_MISO_Init(void);
+void SPI_SCK_Init(void);
+void SPI_CS_Init(void);
 
-#include <stdint.h>
-typedef unsigned int	UINT;	/* int must be 16-bit or 32-bit */
-typedef unsigned char	BYTE;	/* char must be 8-bit */
-typedef uint16_t		WORD;	/* 16-bit unsigned integer */
-typedef uint16_t		WCHAR;	/* 16-bit unsigned integer */
-typedef uint32_t		DWORD;	/* 32-bit unsigned integer */
-typedef uint64_t		QWORD;	/* 64-bit unsigned integer */
-
-
-/******************************************************************************
- Public methods
- *****************************************************************************/
-
-/**
-    \brief Initialize SPI hardware
- */
-void SPI_Init (void);
-
-/**
-	\brief Reads a BYTE
- */
-BYTE SPI_Read(void);
-
-/**
-	\brief Writes a BYTE
- */
-void SPI_Write(BYTE d);
-
-/**
-	\brief Sends 80 clocks with MOSI high (New function)
-*/
-void SPI_80Clocks(void);
-
-/**
-	\brief Sends 6 BYTEs continuously (New function)
-*/
-void SPI_SendCommand(BYTE data[6]);
-
-/**
-    \brief Flush of SPI buffer.
- */
-void SPI_Release (void);
-
-/**
-    \brief Selecting function in SPI terms, associated with SPI module.
- */
-void SPI_CS_Low (void);
-
-/**
-    \brief Deselecting function in SPI terms, associated with SPI module.
- */
-void SPI_CS_High (void);
-
-/**
-    \brief Setting frequency of SPI's clock to maximun possible.
- */
-void SPI_Freq_High (void);
-
-/**
-    \brief Setting frequency of SPI's clock equal or lower than 400kHz.
- */
-void SPI_Freq_Low (void);
-
-/**
-    \brief Start a non-blocking timer.
-    \param ms Milliseconds.
- */
-void SPI_Timer_On (WORD ms, int timer);
-
-/**
-    \brief Check the status of non-blocking timer.
-    \return Status, TRUE if timeout is not reach yet.
- */
-bool SPI_Timer_Status (int timer);
-
-/**
-    \brief Stop of non-blocking timer. Mandatory.
- */
-void SPI_Timer_Off (int timer);
+void SPI_MOSI_Set(unsigned char);
+unsigned char SPI_MISO_Get(void);
+void SPI_SCK_Set(unsigned char);
+void SPI_CS_Set(unsigned char);
 
 #endif
 
-/*
-The MIT License (MIT)
-
-Copyright (c) 2015 Nelson Lombardo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/

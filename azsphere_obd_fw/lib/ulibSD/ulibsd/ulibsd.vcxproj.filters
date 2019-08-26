@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="spi.h">
+    <ClInclude Include="sd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sd.h">
+    <ClInclude Include="bitbangspi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -26,7 +26,7 @@
     <ClCompile Include="sd.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="spi.c">
+    <ClCompile Include="bitbangspi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
