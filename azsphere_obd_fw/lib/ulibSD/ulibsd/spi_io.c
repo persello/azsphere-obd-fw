@@ -150,34 +150,37 @@ unsigned long long millis() {
 	return val;
 }
 
-long period = -1;
-unsigned long long started;
-void SPI_Timer_On(WORD ms) {
-	period = ms;
-	started = millis();
+long period[10] = { };
+unsigned long long started[10] = { };
+char lastStatus[10] = { };
+void SPI_Timer_On(WORD ms, int timer) {
+	period[timer] = ms;
+	started[timer] = millis();
 }
 
 
-inline BOOL SPI_Timer_Status(void) {
+inline BOOL SPI_Timer_Status(int timer) {
 
-	// Timer is enabled
-	if (period == -1) {
-		return TRUE;
+	// Timer is disabled
+	if (period[timer] == 0) {
+		return lastStatus[timer];
 	}
 	else {
 
 		// Timer has expired
-		if (millis() > started + period) {
+		if (millis() > started[timer] + period[timer]) {
+			lastStatus[timer] = FALSE;
 			return FALSE;
 		}
 		else {
+			lastStatus[timer] = TRUE;
 			return TRUE;
 		}
 	}
 }
 
-inline void SPI_Timer_Off(void) {
-	period = -1;
+inline void SPI_Timer_Off(int timer) {
+	period[timer] = 0;
 }
 
 #ifdef SPI_DEBUG_OSC

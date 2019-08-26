@@ -39,7 +39,7 @@ int main(void)
 	Log_Debug("MAIN: SIGTERM handler registered, initializing SD card.\n");
 
 	// FAT File Sytem Initialization
-	initializeSD();
+	startSDThread();
 
 	Log_Debug("MAIN: Initializing GPIOs.\n");
 
@@ -107,8 +107,7 @@ int main(void)
 
 	stopCommandInterpreter();
 	stopTCPThreads();
-	if (&currentFile) f_close(&currentFile);
-	stopSD();
+	stopSDThread();
 
 	Log_Debug("MAIN: Services stopped. Exiting from application.\n");
 

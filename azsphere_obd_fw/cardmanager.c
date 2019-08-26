@@ -1,5 +1,6 @@
 #include "cardmanager.h"
 
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -11,6 +12,10 @@
 // FATFS: block <-> file system
 
 bool mounted = false;
+bool fileopened = false;
+pthread_t SDThread;
+
+int threadStatus = 0;
 
 int newSession() {
 
@@ -18,7 +23,7 @@ int newSession() {
 
 	FILINFO fno;
 	FRESULT res;
-	
+
 	char* name = malloc(16 * sizeof(char));
 	int i = 0;
 
@@ -39,19 +44,18 @@ int newSession() {
 
 	if (res == FR_OK) {
 		Log_Debug("CARDMANAGER: File created successfully.\n");
+		fileopened = true;
 	}
 	else {
 		Log_Debug("CARDMANAGER: Error during file creation (%d).\n", res);
+		fileopened = false;
 		return -1;
 	}
-
-	f_close(&currentFile);
-	stopSD();
 
 	return 0;
 }
 
-int initializeSD() {
+int mountSD() {
 
 	Log_Debug("CARDMANAGER: Mounting SD card.\n");
 
@@ -59,29 +63,66 @@ int initializeSD() {
 	FRESULT res = f_mount(&SD, "", 1);
 
 	DWORD vsn;
-	char label[12];
+	char label[100];
 
 	f_getlabel("", label, &vsn);
 
 	if (res == FR_OK) {
 		Log_Debug("CARDMANAGER: SD \"%s\" (%u) mounted successfully.\n", label, vsn);
 		mounted = true;
-		newSession();
 		return 0;
 	}
 	else {
-		Log_Debug("CARDMANAGER: SD \"%s\" (%u) failed to mount. Error code is %d.\n", label, vsn, res);
+		Log_Debug("CARDMANAGER: SD card failed to mount. Error code is %d.\n", res);
 		mounted = false;
 		return -1;
 	}
 
 }
 
+int unmountSD() {
+	Log_Debug("CARDMANAGER: Unmounting SD card.\n");
+
+	// Close the file, if opened, before unmounting.
+	if (&currentFile) {
+
+		Log_Debug("CARDMANAGER: A file was opened. Closing now.\n");
+
+		FRESULT r = f_close(&currentFile);
+		fileopened = false;
+
+		memset(&currentFile, 0, sizeof(currentFile));
+
+		if (r == FR_OK) {
+			Log_Debug("CARDMANAGER: File closed successfully.\n");
+		}
+		else {
+			Log_Debug("CARDMANAGER: Cannot close file (%d).\n", r);
+		}
+	}
+
+	// Unmounts the default drive (SD card)
+	FRESULT res = f_mount(0, "", 0);
+
+	int s = 0;
+
+	if (res == FR_OK) {
+		Log_Debug("CARDMANAGER: SD unmounted successfully.\n");
+	}
+	else {
+		Log_Debug("CARDMANAGER: SD unmount error. Error code is %d.\n", res);
+		s = -1;
+	}
+
+	mounted = false;
+	return s;
+}
+
 int logToSD(char* data) {
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	struct tm* time = gmtime(&ts.tv_sec);
-	
+
 	// | DATE & TIME | \t | DATA | \r\n | NULL TERMINATOR |
 	// Date and time: YYYY-MM-DD HH:mm:ss (maximum is 19 chars)
 	int length = 23;												// Time, \t, \r\n and terminator
@@ -99,25 +140,66 @@ int logToSD(char* data) {
 		time->tm_min,
 		time->tm_sec,
 		data);
+
+	// TODO: Write to a circular buffer
 }
 
-int stopSD() {
-	Log_Debug("CARDMANAGER: Unmounting SD card.\n");
+void* SDThreadMain(void* _param) {
 
-	// Unmounts the default drive (SD card)
-	FRESULT res = f_mount(0, "", 0);
+	Log_Debug("CARDMANAGER: SD thread started.\n");
 
-	int s = 0;
+	while (!threadStatus) {
 
-	if (res == FR_OK) {
-		Log_Debug("CARDMANAGER: SD unmounted successfully.\n");
+		if (!mounted) {
+
+			// We try to mount the file system continuously.
+			mountSD();
+		}
+		else {
+			if (fileopened) {
+
+				// When the file is opened...
+
+				// Sync the changes to the SD card for safety reasons.
+				if (f_sync(&currentFile) != FR_OK) {
+					unmountSD();
+				}
+			}
+			else {
+
+				// Create a new session.
+
+				if (newSession() != 0) {
+
+					// Unmount device on fail.
+					unmountSD();
+				}
+			}
+		}
 	}
-	else {
-		Log_Debug("CARDMANAGER: SD unmount error. Error code is %d.\n", res);
-		s = -1;
-	}
 
-	mounted = false;
+	// Unmount before exiting
 
-	return s;
+	unmountSD();
+
+	Log_Debug("CARDMANAGER: SD thread stopped.\n");
+}
+
+int startSDThread() {
+
+	Log_Debug("CARDMANAGER: Starting SD thread.\n");
+
+	// Allow it to loop.
+	threadStatus = 0;
+
+	// Start a thread.
+	pthread_create(&SDThread, NULL, SDThreadMain, NULL);
+}
+
+int stopSDThread() {
+
+	Log_Debug("CARDMANAGER: Stopping SD thread.\n");
+
+	// Request to exit the loop
+	threadStatus = 1;
 }

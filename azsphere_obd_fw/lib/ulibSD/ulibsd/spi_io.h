@@ -70,18 +70,18 @@ void SPI_Freq_Low (void);
     \brief Start a non-blocking timer.
     \param ms Milliseconds.
  */
-void SPI_Timer_On (WORD ms);
+void SPI_Timer_On (WORD ms, int timer);
 
 /**
     \brief Check the status of non-blocking timer.
     \return Status, TRUE if timeout is not reach yet.
  */
-BOOL SPI_Timer_Status (void);
+BOOL SPI_Timer_Status (int timer);
 
 /**
     \brief Stop of non-blocking timer. Mandatory.
  */
-void SPI_Timer_Off (void);
+void SPI_Timer_Off (int timer);
 
 #endif
 
