@@ -30,4 +30,6 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate);
 /// <returns> 0 if successful, -1 if not. </returns>
 int initStandardOBDModule(void);
 
-//int sendOBDRequest(OBDRequest _request, char** result);
+int sendOBDRequest(OBDRequest _request);
+int sendATCommand(char _command);
+int sendSTCommand(char _command);

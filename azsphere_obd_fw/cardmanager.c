@@ -123,7 +123,7 @@ int unmountSD() {
 	return s;
 }
 
-int logToSD(char* data) {
+int logToSD(char* _data) {
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	struct tm* time = gmtime(&ts.tv_sec);
@@ -131,7 +131,7 @@ int logToSD(char* data) {
 	// | DATE & TIME | \t | DATA | \r\n | NULL TERMINATOR |
 	// Date and time: YYYY-MM-DD HH:mm:ss.ttt (maximum is 23 chars)
 	int length = 27;												// Time, \t, \r\n and terminator
-	length += strlen(data);
+	length += strlen(_data);
 
 	// Create a buffer and erase it
 	char* buf = malloc(length * sizeof(char));
@@ -145,7 +145,7 @@ int logToSD(char* data) {
 		time->tm_min,
 		time->tm_sec + ((ts.tv_nsec / 1000000) > 999),
 		(ts.tv_nsec / 1000000) % 1000,
-		data);
+		_data);
 
 
 	// TODO: Implement a simple thread lock if necessary

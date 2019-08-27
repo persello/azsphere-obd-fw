@@ -11,7 +11,7 @@ FIL currentFile;
 int startSDThread(void);
 
 /// <summary> Logs a string to the SD Card. Date, time and formatting are automatically added. </summary>
-int logToSD(char* data);
+int logToSD(char* _data);
 
 /// <summary> Stops the SD Card thread. </summary>
 int stopSDThread(void);

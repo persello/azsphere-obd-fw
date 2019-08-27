@@ -39,3 +39,9 @@
 // TARGET: 0.2: SD card data logger.
 // TARGET: 0.3: OBD message logging. GPS interpreter.
 // TARGET: 1.0: Log transmission to app.
+
+
+// TIMER LIST
+
+#define TIMER_OBD_MESSAGE			0
+#define TIMER_OBD_MESSAGE_DURATION	5000

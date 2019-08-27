@@ -41,7 +41,7 @@ void* commandInterpreterThread(void* _param) {
 		// The result from the receive function (-1 is incomplete, 0 is complete).
 		int result = -1;
 
-		// 1024 because could be and encrypted or non-standard command.
+		// 1024 because could be a non-standard command.
 		char buf[1024];
 
 		// buf is now an empty string.
