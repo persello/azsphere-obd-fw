@@ -1,5 +1,7 @@
 #include "cardmanager.h"
 
+#include "lib/circularbuffer/buffer.h"
+
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +16,9 @@
 bool mounted = false;
 bool fileopened = false;
 pthread_t SDThread;
+
+buffer_t writeBuffer;
+buffer_t readBuffer;
 
 int threadStatus = 0;
 
@@ -124,24 +129,32 @@ int logToSD(char* data) {
 	struct tm* time = gmtime(&ts.tv_sec);
 
 	// | DATE & TIME | \t | DATA | \r\n | NULL TERMINATOR |
-	// Date and time: YYYY-MM-DD HH:mm:ss (maximum is 19 chars)
-	int length = 23;												// Time, \t, \r\n and terminator
+	// Date and time: YYYY-MM-DD HH:mm:ss.ttt (maximum is 23 chars)
+	int length = 27;												// Time, \t, \r\n and terminator
 	length += strlen(data);
 
 	// Create a buffer and erase it
 	char* buf = malloc(length * sizeof(char));
 	memset(buf, 0, sizeof(buf));
 
-	sprintf(buf, "%d-%d-%d %d:%d:%d\t%s\r\n",
+	sprintf(buf, "%d-%d-%d %d:%d:%d.%d\t%s\r\n",
 		time->tm_year + 1900,
 		time->tm_mon + 1,
 		time->tm_mday,
 		time->tm_hour,
 		time->tm_min,
-		time->tm_sec,
+		time->tm_sec + ((ts.tv_nsec / 1000000) > 999),
+		(ts.tv_nsec / 1000000) % 1000,
 		data);
 
-	// TODO: Write to a circular buffer
+
+	// TODO: Implement a simple thread lock if necessary
+	for (int i = 0; i < strlen(buf); i++) {
+		if (putCharBuffer(&writeBuffer, buf[i]) == -1) {
+			Log_Debug("CARDMANAGER: Write buffer is full! Data will be lost!\n");
+			break;
+		}
+	}
 }
 
 void* SDThreadMain(void* _param) {
@@ -160,6 +173,11 @@ void* SDThreadMain(void* _param) {
 			if (fileopened) {
 
 				// When the file is opened...
+				// Write from the circular buffer
+				char c;
+				while (getCharBuffer(&writeBuffer, &c) != -1) {
+					f_putc(c, &currentFile);
+				}
 
 				// Sync the changes to the SD card for safety reasons.
 				// Also serves as SD insertion check (unmounts on fail).
@@ -193,6 +211,10 @@ int startSDThread() {
 
 	// Allow it to loop.
 	threadStatus = 0;
+
+	// Initialize the buffers
+	initCircBuffer(&writeBuffer, 4096);
+	initCircBuffer(&readBuffer, 4096);
 
 	// Start a thread.
 	pthread_create(&SDThread, NULL, SDThreadMain, NULL);
