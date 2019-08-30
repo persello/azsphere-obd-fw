@@ -21,7 +21,7 @@ void Timer_On(int _ms, int _timer) {
 }
 
 
-inline int Timer_Status(int _timer) {
+int Timer_Status(int _timer) {
 
 	// Timer is disabled
 	if (period == 0) {
@@ -39,6 +39,6 @@ inline int Timer_Status(int _timer) {
 	}
 }
 
-inline void Timer_Off(int _timer) {
+void Timer_Off(int _timer) {
 	period[_timer] = 0;
 }

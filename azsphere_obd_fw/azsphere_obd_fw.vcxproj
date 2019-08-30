@@ -65,6 +65,9 @@
     <ProjectReference Include="lib\fatfs\fatfs.vcxproj">
       <Project>{7470474c-8f6d-45d3-a561-8fee2af1f17c}</Project>
     </ProjectReference>
+    <ProjectReference Include="lib\timer\timer.vcxproj">
+      <Project>{f630f6ff-35d6-4b97-b156-de7821e061e9}</Project>
+    </ProjectReference>
     <ProjectReference Include="lib\ulibSD\ulibsd\ulibsd.vcxproj">
       <Project>{ce7e440d-1ba1-4aaa-b9b9-5cc981407b27}</Project>
     </ProjectReference>

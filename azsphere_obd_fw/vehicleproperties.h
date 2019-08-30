@@ -30,4 +30,11 @@ typedef struct {
 	char supportedMode1PIDs[0x61];
 	FuelType fuelType;
 	char (*DTCs)[5];
+	int initialized;
+
+	int lastSpeed;
+	double lastRPM;
+	int lastEngineCoolantTemp;
+	double lastAirFlow;
+	double lastThrottlePosition;
 } VehicleProperties;

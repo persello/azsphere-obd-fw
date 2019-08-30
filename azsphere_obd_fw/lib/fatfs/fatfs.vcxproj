@@ -19,6 +19,11 @@
     <ClInclude Include="ff.h" />
     <ClInclude Include="ffconf.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ulibSD\ulibsd\ulibsd.vcxproj">
+      <Project>{ce7e440d-1ba1-4aaa-b9b9-5cc981407b27}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7470474c-8f6d-45d3-a561-8fee2af1f17c}</ProjectGuid>
     <Keyword>AzureSphere</Keyword>

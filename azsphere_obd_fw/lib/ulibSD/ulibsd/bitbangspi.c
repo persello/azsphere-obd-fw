@@ -68,7 +68,7 @@ void SPI_CS_Init(void) {
 
 
 inline void SPI_MOSI_Set(unsigned char s) {
-	if (GPIO_SetValue(mosifd, s ? GPIO_Value_High : GPIO_Value_Low) != 0) {
+	if (GPIO_SetValue(mosifd, s) != 0) {
 		Log_Debug("SPIIO: Cannot operate MOSI line. Details: \"%s\".\n", strerror(errno));
 	}
 }
@@ -76,7 +76,7 @@ inline void SPI_MOSI_Set(unsigned char s) {
 
 
 inline void SPI_SCK_Set(unsigned char s) {
-	if (GPIO_SetValue(sckfd, s ? GPIO_Value_High : GPIO_Value_Low) != 0) {
+	if (GPIO_SetValue(sckfd, s) != 0) {
 		Log_Debug("SPIIO: Cannot operate SCK line. Details: \"%s\".\n", strerror(errno));
 	}
 }
@@ -84,7 +84,7 @@ inline void SPI_SCK_Set(unsigned char s) {
 
 
 inline void SPI_CS_Set(unsigned char s) {
-	if (GPIO_SetValue(csfd, s ? GPIO_Value_High : GPIO_Value_Low) != 0) {
+	if (GPIO_SetValue(csfd, s) != 0) {
 		Log_Debug("SPIIO: Cannot operate CS line. Details: \"%s\".\n", strerror(errno));
 	}
 }
@@ -100,6 +100,5 @@ inline unsigned char SPI_MISO_Get(void) {
 		return 0;
 	}
 
-	if (result == GPIO_Value_High) return 1;
-	return 0;
+	return result;
 }

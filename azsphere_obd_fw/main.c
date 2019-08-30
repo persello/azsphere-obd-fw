@@ -72,7 +72,7 @@ int main(void)
 	startCommandInterpreter(readTCPString, writeTCPString);
 
 	// Starts the serial with parameters specified in config.h.
-	initStandardOBDModule();
+	startOBDThread();
 
 	Log_Debug("MAIN: Initialization finished.\n");
 

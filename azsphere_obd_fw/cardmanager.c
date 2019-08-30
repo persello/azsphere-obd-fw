@@ -1,5 +1,6 @@
 #include "cardmanager.h"
 
+#include "config.h"
 #include "lib/circularbuffer/buffer.h"
 
 #include <pthread.h>
@@ -215,6 +216,9 @@ int startSDThread() {
 	// Initialize the buffers
 	initCircBuffer(&writeBuffer, 4096);
 	initCircBuffer(&readBuffer, 4096);
+
+	char opening[100] = { };
+	sprintf(&opening, "AZSPHEREOBD V%s", FW_VER);
 
 	// Start a thread.
 	pthread_create(&SDThread, NULL, SDThreadMain, NULL);
