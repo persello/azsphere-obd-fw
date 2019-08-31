@@ -1,5 +1,6 @@
 #include "obdserial.h"
 
+#include "cardmanager.h"
 #include "config.h"
 #include "obdpids.h"
 
@@ -94,7 +95,7 @@ int UART_Receive() {
 	Timer_Off(TIMER_OBD_UART);
 
 	if (r != '>') {
-		Log_Debug("OBDSERIAL: Error while reading data. The module did not answer with '>' within %d milliseconds.", TIMER_OBD_UART_DURATION);
+		Log_Debug("OBDSERIAL: Error while reading data. The module did not answer with '>' within %d milliseconds.\n", TIMER_OBD_UART_DURATION);
 
 		// Try to reconnect to the module
 		OBD.connected = 0;
@@ -218,6 +219,7 @@ int sendSTCommand(char* _command) {
 
 int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	// Initialize the OBDModule struct and its UART_Config
+	// TODO: only if null
 	OBDModule_Init(_module);
 
 	// Set all the parameters
@@ -228,6 +230,7 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	_module->uartConfig.parity = UART_Parity_None;
 	_module->uartConfig.stopBits = UART_StopBits_One;
 
+	// Create UART file descriptor only the first time
 	if (_module->uartfd == 0)
 		_module->uartfd = UART_Open(_id, &_module->uartConfig);
 
@@ -247,7 +250,7 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	if (!sendATCommand("Z")) {
 		return -1;
 	}
-	
+
 	// Echo off
 	if (!sendATCommand("E0")) {
 		return -1;
@@ -309,6 +312,9 @@ void* OBDThreadMain(void* _param) {
 
 				if (sendOBDRequest(r) == -1) {
 					Log_Debug("OBDSERIAL: Error while asking 01-20 supported PIDs.\n");
+
+					// Let's reset the module
+					OBD.connected = false;
 				}
 				else {
 
@@ -320,7 +326,7 @@ void* OBDThreadMain(void* _param) {
 
 						// Length is correct, check header
 						char* expectedHeader = malloc(6);
-						sprintf(expectedHeader, "%02x %02x ", r.mode + 0x40, r.pid);
+						sprintf(expectedHeader, "%02X %02X ", r.mode + 0x40, r.pid);
 
 						// Check if we received the correct answer
 						if (strncmp(received, expectedHeader, 6) == 0) {
@@ -339,43 +345,191 @@ void* OBDThreadMain(void* _param) {
 							int currentPID = 1;
 							for (int i = 2; i < 6; i++) {
 								for (int j = 0; j < 8; j++) {
-									car.supportedMode1PIDs[currentPID] = (1 << (7 - j)) & param[i];
+									car.supportedMode1PIDs[currentPID] = ((1 << (7 - j)) & param[i]) > 0;
 									if (car.supportedMode1PIDs[currentPID]) {
 										Log_Debug("OBDSERIAL: Car supports PID number %02x.\n", currentPID);
 									}
 									currentPID++;
 								}
 							}
+
+							car.initialized = 1;
 						}
 					}
 				}
-
+				// ECU initialized, poll the parameters
 			}
-			// ECU connected, poll the parameters
+			else {
+
+				// Poll all the interesting parameters
+				for (int i = 0; i < PARAMETER_POLL_COUNT; i++) {
+
+					// Is its PID supported by this car?
+					if (carParametersToPoll[i].mode == 1 && car.supportedMode1PIDs[carParametersToPoll[i].pid]) {
+
+						// Supported: Send message
+						if (sendOBDRequest(carParametersToPoll[i]) == -1) {
+
+							// Send failed
+							Log_Debug("OBDSERIAL: Failed to get parameter %02x from the car's ECU.\n", carParametersToPoll[i].pid);
+
+							// Reinitialize the ECU next time
+							car.initialized = 0;
+
+							break;
+						}
+
+						// Read the answer next (reads all the messages and processes the current one, if found)
+						char* received;
+						while (getLastReceivedMessage(&received)) {
+
+							// Receives n bytes of answer and 2 of confirmation (written in ASCII), spacing between each one and trailing \n\n
+							if (strlen(received) == ((2 + carParametersToPoll[i].length) * 3 + 2)) {
 
 
+								// Length is correct, check header against last sent message's parameters
+								char* expectedHeader = malloc(6);
+								sprintf(expectedHeader, "%02X %02X ", carParametersToPoll[i].mode + 0x40, carParametersToPoll[i].pid);
 
+								// Check if we received the correct answer
+								if (strncmp(received, expectedHeader, 6) == 0) {
+									Log_Debug("OBDSERIAL: PID %02x received.\n", carParametersToPoll[i].pid);
+
+									char param[2 + carParametersToPoll[i].length];
+									char* pointer;
+
+									// Load the received bytes into an array
+									param[0] = strtol(received, &pointer, 16);
+									for (int j = 1; j < (2 + carParametersToPoll[i].length); j++) {
+										param[j] = strtol(pointer, &pointer, 16);
+									}
+
+									char* result = malloc(100);
+
+									// Interpreting received data
+									switch (param[1]) {
+
+										// param[1] is the PID of the current received message
+
+										// Engine coolant temperature
+									case 0x05:
+
+										Log_Debug("OBDSERIAL: Decoding engine coolant temperature.\n");
+
+										// Celsius degrees
+										int temperature = param[2] - 40;
+										car.lastEngineCoolantTemp = temperature;
+
+										// Write to SD
+										sprintf(result, "ENGINETEMP\t%d", temperature);
+										logToSD(result);
+
+										Log_Debug("OBDSERIAL: Engine coolant temperature is %d C.\n", temperature);
+
+										break;
+
+										// Engine RPM
+									case 0x0C:
+
+										Log_Debug("OBDSERIAL: Decoding engine RPM.\n");
+
+										double rpm = ((256 * param[2]) + param[3]) / 4.00;
+										car.lastRPM = rpm;
+
+										// Write to SD
+										sprintf(result, "VEHICLERPM\t%f", rpm);
+										logToSD(result);
+
+										Log_Debug("OBDSERIAL: RPM count is %f RPM.\n", rpm);
+
+										break;
+
+										// Vehicle speed
+									case 0x0D:
+
+										Log_Debug("OBDSERIAL: Decoding vehicle speed.\n");
+
+										int speed = param[2];
+										car.lastSpeed = speed;
+
+										// Write to SD
+										sprintf(result, "VEHICSPEED\t%d", speed);
+										logToSD(result);
+
+										Log_Debug("OBDSERIAL: Speed is %d km/h.\n", speed);
+
+										break;
+
+										// Intake air flow rate
+									case 0x10:
+
+										Log_Debug("OBDSERIAL: Decoding intake air flow.\n");
+
+										double maf = ((256 * param[2]) + param[3]) / 100.00;
+										car.lastAirFlow = maf;
+
+										// Write to SD
+										sprintf(result, "ENGAIRFLOW\t%f", maf);
+										logToSD(result);
+
+										Log_Debug("OBDSERIAL: Intake air flow is %f g/s.\n", maf);
+
+										break;
+
+										// Throttle position
+									case 0x11:
+
+										Log_Debug("OBDSERIAL: Decoding throttle position.\n");
+
+										double throttle = param[2] * 100 / 255.0;
+										car.lastThrottlePosition = throttle;
+
+										// Write to SD
+										sprintf(result, "ENTHROTTLE\t%f", throttle);
+										logToSD(result);
+
+										Log_Debug("OBDSERIAL: Throttle position is %f.\n", throttle);
+
+										break;
+									}
+
+									free(result);
+
+								}
+								// Incorrect header: need to reinitialize car
+								else {
+									car.initialized = 0;
+								}
+							}
+							// Incorrect length: need to reinitialize car (module resets when car initialization fails)
+							else {
+								car.initialized = 0;
+							}
+						}
+					}
+				}
+			}
+			}
 		}
+
+		Log_Debug("OBDSERIAL: OBD thread stopped.\n");
 	}
 
-	Log_Debug("OBDSERIAL: OBD thread stopped.\n");
-}
 
+	void startOBDThread() {
 
-void startOBDThread() {
+		// Starts the thread
+		Log_Debug("OBDSERIAL: Starting OBD thread.\n");
 
-	// Starts the thread
-	Log_Debug("OBDSERIAL: Starting OBD thread.\n");
+		// Let it run
+		threadStatus = 0;
+		pthread_create(&OBDThread, NULL, OBDThreadMain, NULL);
+	}
 
-	// Let it run
-	threadStatus = 0;
-	pthread_create(&OBDThread, NULL, OBDThreadMain, NULL);
-}
+	void stopOBDThread() {
 
-void stopOBDThread() {
+		Log_Debug("OBDSERIAL: Stopping OBD thread.\n");
 
-	Log_Debug("OBDSERIAL: Stopping OBD thread.\n");
-
-	// Exit from loop
-	threadStatus = 1;
-}
+		// Exit from loop
+		threadStatus = 1;
+	}

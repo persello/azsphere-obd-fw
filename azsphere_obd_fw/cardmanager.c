@@ -124,21 +124,21 @@ int unmountSD() {
 	return s;
 }
 
-int logToSD(char* _data) {
+void logToSD(char* _data) {
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	struct tm* time = gmtime(&ts.tv_sec);
 
 	// | DATE & TIME | \t | DATA | \r\n | NULL TERMINATOR |
 	// Date and time: YYYY-MM-DD HH:mm:ss.ttt (maximum is 23 chars)
-	int length = 27;												// Time, \t, \r\n and terminator
+	int length = 26;												// Time, \t, \r and terminator
 	length += strlen(_data);
 
 	// Create a buffer and erase it
 	char* buf = malloc(length * sizeof(char));
 	memset(buf, 0, sizeof(buf));
 
-	sprintf(buf, "%d-%d-%d %d:%d:%d.%d\t%s\r\n",
+	sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d.%03d\t%s\r",
 		time->tm_year + 1900,
 		time->tm_mon + 1,
 		time->tm_mday,
@@ -206,7 +206,7 @@ void* SDThreadMain(void* _param) {
 	Log_Debug("CARDMANAGER: SD thread stopped.\n");
 }
 
-int startSDThread() {
+void startSDThread() {
 
 	Log_Debug("CARDMANAGER: Starting SD thread.\n");
 
@@ -218,13 +218,14 @@ int startSDThread() {
 	initCircBuffer(&readBuffer, 4096);
 
 	char opening[100] = { };
-	sprintf(&opening, "AZSPHEREOBD V%s", FW_VER);
+	sprintf(&opening, "ASPHEREOBD\tV%s", FW_VER);
+	logToSD(&opening);
 
 	// Start a thread.
 	pthread_create(&SDThread, NULL, SDThreadMain, NULL);
 }
 
-int stopSDThread() {
+void stopSDThread() {
 
 	Log_Debug("CARDMANAGER: Stopping SD thread.\n");
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vehicleproperties.h"
+
 // MODE 1
 
 #define OBD_SUPPORTED_01_20				{0x01, 0x00, 0x04}
@@ -190,3 +192,12 @@
 // #define OBD_MODE_9_SUPPORTED_01_20		{0x09, 0x00, 0x04}
 // #define OBD_VIN							{0x09, 0x02, NULL}
 // #define OBD_CALIBRATION_ID				{0x09, 0x04, NULL}
+
+#define PARAMETER_POLL_COUNT				5
+
+OBDRequest carParametersToPoll[PARAMETER_POLL_COUNT] = {
+	OBD_ENGINE_COOLANT_TEMPERATURE,
+	OBD_ENGINE_RPM,
+	OBD_VEHICLE_SPEED,
+	OBD_MAF_AIR_FLOW_RATE,
+	OBD_THROTTLE_POSITION };

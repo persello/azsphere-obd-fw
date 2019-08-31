@@ -37,7 +37,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-    <UseMultiToolTask>false</UseMultiToolTask>
+    <UseMultiToolTask>true</UseMultiToolTask>
     <LibraryPath>C:\Users\ricca\Projects\Azure Sphere\azsphere_obd_fw\azsphere_obd_fw\lib\circularbuffer;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemGroup>

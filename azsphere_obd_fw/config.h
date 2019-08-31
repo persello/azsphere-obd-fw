@@ -34,6 +34,7 @@
 // 0.1.1: SD card mounted, basic SD I/O.
 // 0.1.2: SD card mounted as full FAT/exFAT file system.
 // 0.1.3: SD card now works in bit-bang mode. File management successful.
+// 0.1.4: First communication with the car's ECU.
 
 
 // TARGET: 0.2: Fisrt basic OBD logger.

@@ -27,14 +27,14 @@ typedef enum {
 
 typedef struct {
 	char* VIN;
-	char supportedMode1PIDs[0x61];
+	char supportedMode1PIDs[0x61];			// Done
 	FuelType fuelType;
 	char (*DTCs)[5];
-	int initialized;
+	int initialized;						// Done
 
-	int lastSpeed;
-	double lastRPM;
-	int lastEngineCoolantTemp;
-	double lastAirFlow;
-	double lastThrottlePosition;
+	int lastSpeed;							// Done
+	double lastRPM;							// Done
+	int lastEngineCoolantTemp;				// Done
+	double lastAirFlow;						// Done
+	double lastThrottlePosition;			// Done
 } VehicleProperties;
