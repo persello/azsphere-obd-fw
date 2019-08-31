@@ -83,14 +83,8 @@ int updateSS(SoftwareSerial* s)
 		unsigned long long timeDifferenceRX = (nanos() - s->lastTimeRead);
 		if (timeDifferenceRX > 1000000000UL / s->br) {
 
-
-			GPIO_SetValue(s->txfd, 1);
-
 			// Push data to current character
 			s->currentCharRead |= (reading << (s->currentBitRead - 1));
-
-
-			GPIO_SetValue(s->txfd, 0);
 
 			// Record delta time
 			s->lastTimeRead += timeDifferenceRX;
@@ -111,7 +105,7 @@ int updateSS(SoftwareSerial* s)
 	// Write
 
 	// Time to write?
-	/*unsigned long long timeDifferenceTX = (nanos() - s->lastTimeWrite);
+	unsigned long long timeDifferenceTX = (nanos() - s->lastTimeWrite);
 	if (timeDifferenceTX > 1000000000UL / s->br) {
 		int value;
 
@@ -125,8 +119,8 @@ int updateSS(SoftwareSerial* s)
 
 			value = 0;
 		}
-		// Stop bit
-		else if (s->currentBitWrite == 9) {
+		// Stop bits (2 for safety)
+		else if (s->currentBitWrite == 9 | s->currentBitWrite == 10) {
 			value = 1;
 		}
 		// Data
@@ -140,11 +134,11 @@ int updateSS(SoftwareSerial* s)
 		// Immediately record the time delta
 		s->lastTimeWrite += timeDifferenceTX;
 
-		// Increment bit index (0 to 9)
+		// Increment bit index (0 to 10)
 		s->currentBitWrite++;
-		if (s->currentBitWrite == 10) s->currentBitWrite = 0;
+		if (s->currentBitWrite == 11) s->currentBitWrite = 0;
 
-	}*/
+	}
 
 	return 0;
 }
