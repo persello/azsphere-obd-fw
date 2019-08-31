@@ -79,7 +79,7 @@
   <ImportGroup Label="ExtensionTargets" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalOptions>-Werror=implicit-function-declaration %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Werror=implicit-function-declaration %(AdditionalOptions) -Dtimegm=mktime</AdditionalOptions>
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</Verbose>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

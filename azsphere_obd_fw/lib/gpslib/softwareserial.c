@@ -8,24 +8,40 @@
 
 #include <applibs/log.h>
 
+int signalfd = 0;
+
 int initializeSS(SoftwareSerial* s, int tx, int rx)
 {
+
+	Log_Debug("SOFTWARESERIAL: Initializing SoftwareSerial on pins %d and %d.\n", tx, rx);
 
 	// Save pin numbers
 	s->tx = tx;
 	s->rx = rx;
 
 	// Try to open GPIOs
-	s->txfd = GPIO_OpenAsOutput(tx, GPIO_OutputMode_PushPull, GPIO_Value_High);
-	if (s->txfd == -1) {
-		Log_Debug("SOFTWARESERIAL: Cannot open TX line on pin %d. Error: \"%s\" (%d).\n", tx, strerror(errno), errno);
-		return -1;
+	if (!s->txfd) {
+		s->txfd = GPIO_OpenAsOutput(tx, GPIO_OutputMode_PushPull, GPIO_Value_High);
+		if (s->txfd == -1) {
+			Log_Debug("SOFTWARESERIAL: Cannot open TX line on pin %d. Error: \"%s\" (%d).\n", tx, strerror(errno), errno);
+			return -1;
+		}
 	}
 
-	s->rxfd = GPIO_OpenAsInput(rx);
-	if (s->rxfd == -1) {
-		Log_Debug("SOFTWARESERIAL: Cannot open RX line on pin %d. Error: \"%s\" (%d).\n", rx, strerror(errno), errno);
-		return -1;
+	if (!s->rxfd) {
+		s->rxfd = GPIO_OpenAsInput(rx);
+		if (s->rxfd == -1) {
+			Log_Debug("SOFTWARESERIAL: Cannot open RX line on pin %d. Error: \"%s\" (%d).\n", rx, strerror(errno), errno);
+			return -1;
+		}
+	}
+
+	if (!signalfd) {
+		signalfd = GPIO_OpenAsOutput(0, GPIO_OutputMode_PushPull, 0);
+		if (signalfd == -1) {
+			Log_Debug("SOFTWARESERIAL: Cannot open signaling line on pin %d. Error: \"%s\" (%d).\n", 0, strerror(errno), errno);
+			return -1;
+		}
 	}
 
 	// Set the default baudrate
@@ -84,6 +100,8 @@ int updateSS(SoftwareSerial* s)
 		unsigned long long timeDifferenceRX = (nanos() - s->lastTimeRead);
 		if (timeDifferenceRX > 1000000000UL / s->br) {
 
+			GPIO_SetValue(signalfd, 1);
+
 			// Push data to current character
 			s->currentCharRead |= (reading << (s->currentBitRead - 1));
 
@@ -91,6 +109,8 @@ int updateSS(SoftwareSerial* s)
 			s->lastTimeRead += timeDifferenceRX;
 
 			s->currentBitRead++;
+
+			GPIO_SetValue(signalfd, 0);
 
 			// Roll back to zero, ignore stop, save character
 			if (s->currentBitRead > 8) {

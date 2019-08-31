@@ -11,9 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="gps.c" />
+    <ClCompile Include="minmea.c" />
     <ClCompile Include="softwareserial.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gps.h" />
+    <ClInclude Include="minmea.h" />
     <ClInclude Include="softwareserial.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

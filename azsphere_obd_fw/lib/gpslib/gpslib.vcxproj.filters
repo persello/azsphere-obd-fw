@@ -18,9 +18,21 @@
     <ClCompile Include="softwareserial.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="minmea.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gps.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="softwareserial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="minmea.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
