@@ -3,12 +3,14 @@
 #define UART_STRUCTS_VERSION 1
 #include <applibs/uart.h>
 
+#include "vehicleproperties.h"
+
+VehicleProperties car;
+
 typedef struct {
 	int connected;
 	int initialized;
 	UART_BaudRate_Type baudRate;
-	char name[100];
-	char details[100];
 	UART_Config uartConfig;
 	int uartfd;
 } OBDModule;
@@ -26,8 +28,12 @@ typedef struct {
 /// <returns> 0 if successful, -1 if not. </returns>
 int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate);
 
-/// <summary> Initializes the module based on what defined in config.h. </summary>
-/// <returns> 0 if successful, -1 if not. </returns>
-int initStandardOBDModule(void);
+/// <summary> Starts the thread and tries to initialize the module based on what is defined in config.h. </summary>
+void startOBDThread(void);
 
-//int sendOBDRequest(OBDRequest _request, char** result);
+/// <summary> Stops the thread. </summary>
+void stopOBDThread(void);
+
+int sendOBDRequest(OBDRequest _request);
+int sendATCommand(char* _command);
+int sendSTCommand(char* _command);
