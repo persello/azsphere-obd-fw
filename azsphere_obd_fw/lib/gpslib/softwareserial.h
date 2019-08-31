@@ -50,7 +50,7 @@ int setSSBaudRate(SoftwareSerial* s, int br);
 /// <returns> 0 if successful, -1 if not. </returns>
 int updateSS(SoftwareSerial* s);
 
-/// <summary> Adds data to the output buffer. </summary>
+/// <summary> Adds data to the output buffer. WARNING: At speeds such as 9600 baud incominga data might get corrupted while writing. </summary>
 /// <param name="s"> The SoftwareSerial struct. </param>
 /// <param name="data"> The string to send. </param>
 /// <returns> 0 if successful, -1 if buffer full. </returns>

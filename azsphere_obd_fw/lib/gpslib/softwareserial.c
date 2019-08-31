@@ -3,6 +3,7 @@
 #include "../timer/Inc/Public/timer.h"
 
 #include <errno.h>
+#include <malloc.h>
 #include <string.h>
 
 #include <applibs/log.h>
@@ -101,7 +102,6 @@ int updateSS(SoftwareSerial* s)
 	}
 
 
-
 	// Write
 
 	// Time to write?
@@ -156,5 +156,30 @@ int writeSS(SoftwareSerial* s, char* data)
 
 int readStringSS(SoftwareSerial* s, char** data)
 {
+
+	// Working area
+	char buf[512] = { };
+	char in;
+	int i = 0;
+
+	// Until buffer is empty
+	while (getCharBuffer(&(s->rxBuffer), &in) == 0) {
+
+		buf[i] = in;
+		i++;
+
+		// Check for CRLF. If found, break.
+		char* ending = strrchr(buf, '\r');
+		if (ending && !strcmp(buf, "\r\n")) break;
+	}
+
+	// Working buffer used size
+	int length = strlen(buf);
+	if (!length) return -1;
+
+	// Allocate dynamically and copy
+	*data = malloc(length);
+	strcpy(*data, buf);
+
 	return 0;
 }
