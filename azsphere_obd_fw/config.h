@@ -28,7 +28,7 @@
 #define SD_CARD_SCK_PIN		31
 #define SD_CARD_CS_PIN		17								// Use 16 for slot 1.
 
-#define FW_VER			"0.1.4"
+#define FW_VER			"0.2.0"
 
 // 0.1.0: Base alpha FW.
 // 0.1.1: SD card mounted, basic SD I/O.
@@ -36,8 +36,8 @@
 // 0.1.3: SD card now works in bit-bang mode. File management successful.
 // 0.1.4: First communication with the car's ECU.
 
+// 0.2.0: First complete OBD data logger.
 
-// TARGET: 0.2: Fisrt basic OBD logger.
 // TARGET: 0.3: Basic GPS logger, time sync management.
 // TARGET: 0.4: Log transmission to app.
 

@@ -27,7 +27,7 @@ int threadStatus;
 void OBDModule_Init(OBDModule* _module) {
 	_module->baudRate = -1;
 	_module->connected = 0;
-	_module->initialized = 0;
+	_module->initialized = 1;
 	_module->uartfd = 0;
 
 	// It is requested to initialize an UART_Config struct
@@ -218,9 +218,10 @@ int sendSTCommand(char* _command) {
 }
 
 int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
-	// Initialize the OBDModule struct and its UART_Config
-	// TODO: only if null
-	OBDModule_Init(_module);
+
+	// Initialize the OBDModule struct and its UART_Config if not already done
+	if (!_module->initialized)
+		OBDModule_Init(_module);
 
 	// Set all the parameters
 	_module->uartConfig.baudRate = _initialBaudRate;
@@ -231,20 +232,21 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	_module->uartConfig.stopBits = UART_StopBits_One;
 
 	// Create UART file descriptor only the first time
-	if (_module->uartfd == 0)
+	if (_module->uartfd == 0) {
 		_module->uartfd = UART_Open(_id, &_module->uartConfig);
 
-	if (_module->uartfd == -1) {
-		Log_Debug("OBDSERIAL: UART %d initialization failed. Details: \"%s\".\n", _id, strerror(errno));
-		return -1;
-	}
-	else {
-		Log_Debug("OBDSERIAL: UART %d initialized at %d bauds with fd=%d.\n", _id, _module->uartConfig.baudRate, _module->uartfd);
+		if (_module->uartfd == -1) {
+			Log_Debug("OBDSERIAL: UART %d initialization failed. Details: \"%s\".\n", _id, strerror(errno));
+			return -1;
+		}
+		else {
+			Log_Debug("OBDSERIAL: UART %d initialized at %d bauds with fd=%d.\n", _id, _module->uartConfig.baudRate, _module->uartfd);
+		}
 	}
 
 	// Initialize buffers
-	initCircBuffer(&RXBuffer, 1024);
-	initCircBuffer(&TXBuffer, 1024);
+	initCircBuffer(&RXBuffer, 512);
+	initCircBuffer(&TXBuffer, 512);
 
 	// Reset the device
 	if (!sendATCommand("Z")) {
@@ -256,7 +258,8 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 		return -1;
 	}
 
-	// TODO: Raise speed
+	// TODO: Raise speed?
+	// sendSTCommand("BR2000000"); // Maximum MT3620 speed
 
 	// Finally, confirm the connection
 	_module->connected = 1;
@@ -294,7 +297,6 @@ void* OBDThreadMain(void* _param) {
 		if (!OBD.connected) {
 
 			// Disconnected
-			Log_Debug("OBDSERIAL: Trying to initialize module as per defined in config file.\n");
 			initOBDComm(OBD_SERIAL, &OBD, OBD_INITIAL_BR);
 		}
 		else {
@@ -354,12 +356,54 @@ void* OBDThreadMain(void* _param) {
 							}
 
 							car.initialized = 1;
+
+							// Logs the initialization
+							logToSD("CARECUINIT\t1");
+
 						}
+						// Wrong header
+						else {
+							// Let's reset the module
+							OBD.connected = 0;
+						}
+					}
+					// Wrong length
+					else {
+						
+						// Let's reset the module
+						OBD.connected = 0;
 					}
 				}
 				// ECU initialized, poll the parameters
 			}
 			else {
+
+				// Poll battery voltage
+				sendATCommand("RV");
+				char* voltagestr = malloc(20);
+				getLastReceivedMessage(&voltagestr);
+
+				// We received back voltage information
+				if (strncmp(&voltagestr, "ATRV\r", 5) == 0) {
+
+					// Convert from string
+					float voltage = strtof(voltagestr + 5, NULL);
+					Log_Debug("OBDSERIAL: Battery voltage is %f volts.\n", voltage);
+
+					char* result = malloc(30);
+
+					// Log to SD card
+					sprintf(result, "BATVOLTAGE\t%f", voltage);
+					logToSD(result);
+
+					free(result);
+				}
+				else {
+					Log_Debug("OBDSERIAL: Could not get battery voltage information. Answer was \"%s\".\n", voltagestr);
+				}
+
+				free(voltagestr);
+
 
 				// Poll all the interesting parameters
 				for (int i = 0; i < PARAMETER_POLL_COUNT; i++) {
@@ -375,6 +419,9 @@ void* OBDThreadMain(void* _param) {
 
 							// Reinitialize the ECU next time
 							car.initialized = 0;
+
+							// Logs the deinitialization
+							logToSD("CARECUINIT\t0");
 
 							break;
 						}
@@ -404,7 +451,7 @@ void* OBDThreadMain(void* _param) {
 										param[j] = strtol(pointer, &pointer, 16);
 									}
 
-									char* result = malloc(100);
+									char* result = malloc(30);
 
 									// Interpreting received data
 									switch (param[1]) {
@@ -499,37 +546,43 @@ void* OBDThreadMain(void* _param) {
 								// Incorrect header: need to reinitialize car
 								else {
 									car.initialized = 0;
+
+									// Logs the deinitialization
+									logToSD("CARECUINIT\t1");
 								}
 							}
 							// Incorrect length: need to reinitialize car (module resets when car initialization fails)
 							else {
 								car.initialized = 0;
+
+								// Logs the deinitialization
+								logToSD("CARECUINIT\t1");
 							}
 						}
 					}
 				}
 			}
-			}
 		}
-
-		Log_Debug("OBDSERIAL: OBD thread stopped.\n");
 	}
 
+	Log_Debug("OBDSERIAL: OBD thread stopped.\n");
+}
 
-	void startOBDThread() {
 
-		// Starts the thread
-		Log_Debug("OBDSERIAL: Starting OBD thread.\n");
+void startOBDThread() {
 
-		// Let it run
-		threadStatus = 0;
-		pthread_create(&OBDThread, NULL, OBDThreadMain, NULL);
-	}
+	// Starts the thread
+	Log_Debug("OBDSERIAL: Starting OBD thread.\n");
 
-	void stopOBDThread() {
+	// Let it run
+	threadStatus = 0;
+	pthread_create(&OBDThread, NULL, OBDThreadMain, NULL);
+}
 
-		Log_Debug("OBDSERIAL: Stopping OBD thread.\n");
+void stopOBDThread() {
 
-		// Exit from loop
-		threadStatus = 1;
-	}
+	Log_Debug("OBDSERIAL: Stopping OBD thread.\n");
+
+	// Exit from loop
+	threadStatus = 1;
+}
