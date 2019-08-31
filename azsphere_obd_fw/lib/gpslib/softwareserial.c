@@ -5,7 +5,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include <applibs/gpio.h>
 #include <applibs/log.h>
 
 int initializeSS(SoftwareSerial* s, int tx, int rx)
@@ -51,15 +50,69 @@ int setSSBaudRate(SoftwareSerial* s, int br)
 
 int updateSS(SoftwareSerial* s)
 {
-	// Read (no return, otherwise it doesn't write)
+	// Read (no return, otherwise it won't write)
+
+	// Read RX line
+	GPIO_Value_Type reading;
+	if (GPIO_GetValue(s->rxfd, &reading) == -1) {
+		Log_Debug("SOFTWARESERIAL: Cannot read RX line. Error: \"%s\" (%d).\n", strerror(errno), errno);
+
+		// Fatal error. No need to write anything.
+		return -1;
+	}
+
+	// Waiting for start bit
+	if (s->currentBitRead == 0) {
+
+		// Falling edge
+		if (reading == GPIO_Value_Low && s->lastGPIOStatus == GPIO_Value_High) {
+			// Start bit OK
+			s->currentBitRead = 1;
+
+			// Sync
+			s->lastTimeRead = nanos();
+		}
+
+		s->lastGPIOStatus = reading;
+
+	}
+	// After the start bit, start reading data
+	else {
+
+		// Time to read?
+		unsigned long long timeDifferenceRX = (nanos() - s->lastTimeRead);
+		if (timeDifferenceRX > 1000000000UL / s->br) {
+
+
+			GPIO_SetValue(s->txfd, 1);
+
+			// Push data to current character
+			s->currentCharRead |= (reading << (s->currentBitRead - 1));
+
+
+			GPIO_SetValue(s->txfd, 0);
+
+			// Record delta time
+			s->lastTimeRead += timeDifferenceRX;
+
+			s->currentBitRead++;
+
+			// Roll back to zero, ignore stop, save character
+			if (s->currentBitRead > 8) {
+				s->currentBitRead = 0;
+				putCharBuffer(&(s->rxBuffer), s->currentCharRead);
+				s->currentCharRead = 0x00;
+			}
+		}
+	}
 
 
 
 	// Write
 
 	// Time to write?
-	unsigned long long timeDifference = (nanos() - s->lastTimeWrite);
-	if (timeDifference > 1000000000UL / s->br) {
+	/*unsigned long long timeDifferenceTX = (nanos() - s->lastTimeWrite);
+	if (timeDifferenceTX > 1000000000UL / s->br) {
 		int value;
 
 		// Start bit
@@ -84,14 +137,14 @@ int updateSS(SoftwareSerial* s)
 		// Write current bit on pin
 		GPIO_SetValue(s->txfd, value);
 
-		// Immediately record the time
-		s->lastTimeWrite += timeDifference;
+		// Immediately record the time delta
+		s->lastTimeWrite += timeDifferenceTX;
 
 		// Increment bit index (0 to 9)
 		s->currentBitWrite++;
-
 		if (s->currentBitWrite == 10) s->currentBitWrite = 0;
-	}
+
+	}*/
 
 	return 0;
 }

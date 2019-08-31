@@ -2,6 +2,8 @@
 
 #include "../circularbuffer/buffer.h"
 
+#include <applibs/gpio.h>
+
 typedef struct {
 
 	// Pins
@@ -19,6 +21,7 @@ typedef struct {
 	buffer_t rxBuffer;
 	buffer_t txBuffer;
 
+	GPIO_Value_Type lastGPIOStatus;
 	int currentBitRead;
 	unsigned long long lastTimeRead;
 	char currentCharRead;
