@@ -65,6 +65,9 @@
     <ProjectReference Include="lib\fatfs\fatfs.vcxproj">
       <Project>{7470474c-8f6d-45d3-a561-8fee2af1f17c}</Project>
     </ProjectReference>
+    <ProjectReference Include="lib\gpslib\gpslib.vcxproj">
+      <Project>{cd8a799b-2b14-4161-b7c2-5ad204158bf3}</Project>
+    </ProjectReference>
     <ProjectReference Include="lib\timer\timer.vcxproj">
       <Project>{f630f6ff-35d6-4b97-b156-de7821e061e9}</Project>
     </ProjectReference>

@@ -6,6 +6,10 @@
 /// <returns> The number of milliseconds since midnight UTC. </summary>
 unsigned long long millis();
 
+/// <summary> Get the nanoseconds since an undefined time point. </summary>
+/// <returns> The number of nanoseconds. </summary>
+unsigned long long nanos();
+
 /// <summary> Starts a timer. </summary>
 /// <param name="ms"> The interval of the timer. </param>
 /// <param name="timer"> The number of the timer. </param>

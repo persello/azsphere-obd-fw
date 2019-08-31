@@ -13,6 +13,15 @@ unsigned long long millis() {
 	return val;
 }
 
+unsigned long long nanos() {
+	struct timespec time;
+	clock_gettime(CLOCK_REALTIME, &time);
+	unsigned long long val =
+		(unsigned long long)(time.tv_sec) * 1000000000UL +
+		(unsigned long long)(time.tv_nsec);
+	return val;
+}
+
 long period[MAX_TIMERS] = {};
 unsigned long long started[MAX_TIMERS] = {};
 void Timer_On(int _ms, int _timer) {

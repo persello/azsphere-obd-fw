@@ -15,6 +15,7 @@
 #include "commandinterpreter.h"
 #include "config.h"
 #include "obdserial.h"
+#include "lib/gpslib/softwareserial.h"
 
 
 
@@ -37,6 +38,13 @@ int main(void)
 	sigaction(SIGTERM, &action, NULL);
 
 	Log_Debug("MAIN: SIGTERM handler registered, initializing SD card.\n");
+
+	SoftwareSerial s;
+	initializeSS(&s, GPS_SOFT_TX, GPS_SOFT_RX);
+	writeSS(&s, "TEST TEST TEST TEST TEST TEST");
+	while (1) {
+		updateSS(&s);
+	}
 
 	// FAT File Sytem Initialization
 	startSDThread();

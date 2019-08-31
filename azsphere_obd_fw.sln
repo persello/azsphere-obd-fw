@@ -20,6 +20,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fatfs", "azsphere_obd_fw\li
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "timer", "azsphere_obd_fw\lib\timer\timer.vcxproj", "{F630F6FF-35D6-4B97-B156-DE7821E061E9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gpslib", "azsphere_obd_fw\lib\gpslib\gpslib.vcxproj", "{CD8A799B-2B14-4161-B7C2-5AD204158BF3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -46,6 +48,10 @@ Global
 		{F630F6FF-35D6-4B97-B156-DE7821E061E9}.Debug|ARM.Build.0 = Debug|ARM
 		{F630F6FF-35D6-4B97-B156-DE7821E061E9}.Release|ARM.ActiveCfg = Release|ARM
 		{F630F6FF-35D6-4B97-B156-DE7821E061E9}.Release|ARM.Build.0 = Release|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Debug|ARM.ActiveCfg = Debug|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Debug|ARM.Build.0 = Debug|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Release|ARM.ActiveCfg = Release|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Release|ARM.Build.0 = Release|ARM
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
