@@ -39,6 +39,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <UseMultiToolTask>true</UseMultiToolTask>
     <LibraryPath>C:\Users\ricca\Projects\Azure Sphere\azsphere_obd_fw\azsphere_obd_fw\lib\circularbuffer;$(LibraryPath)</LibraryPath>
+    <PartnerComponents>005180bc-402f-4cb3-a662-72937dbcde47</PartnerComponents>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="cardmanager.c" />
