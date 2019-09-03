@@ -2,7 +2,6 @@
    Licensed under the MIT License. */
 
 #include <stdbool.h>
-#include "../lib/timer/Inc/Public/timer.h"
 
 #include "mt3620-baremetal.h"
 #include "mt3620-uart-poll.h"

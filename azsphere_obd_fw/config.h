@@ -30,8 +30,8 @@
 
 // Software serial for GPS
 
-#define GPS_SOFT_TX			43								// Slot 2 AN pin, use 42 for slot 1
-#define GPS_SOFT_RX			1								// Slot 2 PWM pin, use 0 for slot 1
+// #define GPS_SOFT_TX			43								// Slot 2 AN pin, use 42 for slot 1
+// #define GPS_SOFT_RX			1								// Slot 2 PWM pin, use 0 for slot 1
 
 #define FW_VER			"0.2.0"
 

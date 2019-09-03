@@ -5,18 +5,18 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include <errno.h>
 
 #include "mt3620-baremetal.h"
 #include "mt3620-intercore.h"
 #include "mt3620-uart-poll.h"
 
+#include "softwareserial.h"
+
 extern uint32_t StackTop; // &StackTop == end of TCM0
 
 static _Noreturn void DefaultExceptionHandler(void);
-
-static void PrintBytes(const uint8_t *buf, int start, int end);
-static void PrintGuid(const uint8_t *guid);
 
 static _Noreturn void RTCoreMain(void);
 
@@ -32,135 +32,60 @@ static _Noreturn void RTCoreMain(void);
 #define INT_TO_EXC(i_) (16 + (i_))
 const uintptr_t ExceptionVectorTable[EXCEPTION_COUNT] __attribute__((section(".vector_table")))
 __attribute__((used)) = {
-    [0] = (uintptr_t)&StackTop,                // Main Stack Pointer (MSP)
-    [1] = (uintptr_t)RTCoreMain,               // Reset
-    [2] = (uintptr_t)DefaultExceptionHandler,  // NMI
-    [3] = (uintptr_t)DefaultExceptionHandler,  // HardFault
-    [4] = (uintptr_t)DefaultExceptionHandler,  // MPU Fault
-    [5] = (uintptr_t)DefaultExceptionHandler,  // Bus Fault
-    [6] = (uintptr_t)DefaultExceptionHandler,  // Usage Fault
-    [11] = (uintptr_t)DefaultExceptionHandler, // SVCall
-    [12] = (uintptr_t)DefaultExceptionHandler, // Debug monitor
-    [14] = (uintptr_t)DefaultExceptionHandler, // PendSV
-    [15] = (uintptr_t)DefaultExceptionHandler, // SysTick
+	[0] = (uintptr_t)& StackTop,                // Main Stack Pointer (MSP)
+	[1] = (uintptr_t)RTCoreMain,               // Reset
+	[2] = (uintptr_t)DefaultExceptionHandler,  // NMI
+	[3] = (uintptr_t)DefaultExceptionHandler,  // HardFault
+	[4] = (uintptr_t)DefaultExceptionHandler,  // MPU Fault
+	[5] = (uintptr_t)DefaultExceptionHandler,  // Bus Fault
+	[6] = (uintptr_t)DefaultExceptionHandler,  // Usage Fault
+	[11] = (uintptr_t)DefaultExceptionHandler, // SVCall
+	[12] = (uintptr_t)DefaultExceptionHandler, // Debug monitor
+	[14] = (uintptr_t)DefaultExceptionHandler, // PendSV
+	[15] = (uintptr_t)DefaultExceptionHandler, // SysTick
 
-    [INT_TO_EXC(0)... INT_TO_EXC(INTERRUPT_COUNT - 1)] = (uintptr_t)DefaultExceptionHandler};
+	[INT_TO_EXC(0)... INT_TO_EXC(INTERRUPT_COUNT - 1)] = (uintptr_t)DefaultExceptionHandler };
 
 static _Noreturn void DefaultExceptionHandler(void)
 {
-    for (;;) {
-        // empty.
-    }
+	for (;;) {
+		// empty.
+	}
 }
 
-static void PrintBytes(const uint8_t *buf, int start, int end)
-{
-    int step = (end >= start) ? +1 : -1;
-
-    for (/* nop */; start != end; start += step) {
-        Uart_WriteHexBytePoll(buf[start]);
-    }
-    Uart_WriteHexBytePoll(buf[end]);
-}
-
-static void PrintGuid(const uint8_t *guid)
-{
-    PrintBytes(guid, 3, 0); // 4-byte little-endian word
-    Uart_WriteStringPoll("-");
-    PrintBytes(guid, 5, 4); // 2-byte little-endian half
-    Uart_WriteStringPoll("-");
-    PrintBytes(guid, 7, 6); // 2-byte little-endian half
-    Uart_WriteStringPoll("-");
-    PrintBytes(guid, 8, 9); // 2 bytes
-    Uart_WriteStringPoll("-");
-    PrintBytes(guid, 10, 15); // 6 bytes
-}
+SoftwareSerial serial;
 
 static _Noreturn void RTCoreMain(void)
 {
-    // SCB->VTOR = ExceptionVectorTable
-    WriteReg32(SCB_BASE, 0x08, (uint32_t)ExceptionVectorTable);
 
-    Uart_Init();
-    Uart_WriteStringPoll("--------------------------------\r\n");
-    Uart_WriteStringPoll("IntercoreComms_RTApp_MT3620_BareMetal\r\n");
-    Uart_WriteStringPoll("App built on: " __DATE__ ", " __TIME__ "\r\n");
+	Uart_Init();
 
-    BufferHeader *outbound, *inbound;
-    uint32_t sharedBufSize = 0;
-    if (GetIntercoreBuffers(&outbound, &inbound, &sharedBufSize) == -1) {
-        for (;;) {
-            // empty.
-        }
-    }
+	Uart_WriteStringPoll("BOOT");
 
-    static const size_t payloadStart = 20;
+	// SCB->VTOR = ExceptionVectorTable
+	WriteReg32(SCB_BASE, 0x08, (uint32_t)ExceptionVectorTable);
 
-    for (;;) {
-        uint8_t buf[256];
-        uint32_t dataSize = sizeof(buf);
+	// Initialize software serial
+	initializeSS(&serial, 43, 1);
 
-        // On success, dataSize is set to the actual number of bytes which were read.
-        int r = DequeueData(outbound, inbound, sharedBufSize, buf, &dataSize);
+	BufferHeader* outbound, * inbound;
+	uint32_t sharedBufSize = 0;
+	if (GetIntercoreBuffers(&outbound, &inbound, &sharedBufSize) == -1) {
+		for (;;) {
+			// empty.
+		}
+	}
 
-        if (r == -1 || dataSize < payloadStart) {
-            continue;
-        }
+	for (;;) {
 
-        Uart_WriteStringPoll("Received message of ");
-        Uart_WriteIntegerPoll(dataSize);
-        Uart_WriteStringPoll("bytes:\r\n");
+		updateSS(&serial);
 
-        Uart_WriteStringPoll("  Component Id (16 bytes): ");
-        PrintGuid(buf);
-        Uart_WriteStringPoll("\r\n");
+		// Fresh data
+		if (serial.lastCharReadProcessed == 0) {
 
-        // Print reserved field as little-endian 4-byte integer.
-        Uart_WriteStringPoll("  Reserved (4 bytes): ");
-        PrintBytes(buf, 19, 16);
-        Uart_WriteStringPoll("\r\n");
-
-        // Print message as hex.
-        size_t payloadBytes = dataSize - payloadStart;
-        Uart_WriteStringPoll("  Payload (");
-        Uart_WriteIntegerPoll(payloadBytes);
-        Uart_WriteStringPoll(" bytes as hex): ");
-
-        for (size_t i = payloadStart; i < dataSize; ++i) {
-            Uart_WriteHexBytePoll(buf[i]);
-            if (i != dataSize - 1) {
-                Uart_WriteStringPoll(":");
-            }
-        }
-        Uart_WriteStringPoll("\r\n");
-
-        // Print message as text.
-        Uart_WriteStringPoll("  Payload (");
-        Uart_WriteIntegerPoll(payloadBytes);
-        Uart_WriteStringPoll(" bytes as text): ");
-        for (size_t i = payloadStart; i < dataSize; ++i) {
-            char c[2];
-            c[0] = isprint(buf[i]) ? buf[i] : '.';
-            c[1] = '\0';
-            Uart_WriteStringPoll(c);
-        }
-        Uart_WriteStringPoll("\r\n");
-
-        // Transform the payload by converting upper-case text to lower-case and vice versa,
-        // and send the payload back to the sender.
-        for (size_t i = payloadStart; i < dataSize; ++i) {
-            // This must be an unsigned char, rather than a char, else a compile-time warning
-            // is triggered by __ctype_lookup in ctype.h.
-            unsigned char c = buf[i];
-            if (isupper(c)) {
-                c = tolower(c);
-            } else if (islower(c)) {
-                c = toupper(c);
-            }
-
-            buf[i] = c;
-        }
-
-        EnqueueData(inbound, outbound, sharedBufSize, buf, dataSize);
-    }
+			// Read from buffer happened
+			serial.lastCharReadProcessed = 1;
+			EnqueueData(inbound, outbound, sharedBufSize, serial.lastCharRead, 1);
+		}
+	}
 }

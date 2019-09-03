@@ -1,8 +1,5 @@
 #pragma once
 
-#include "../circularbuffer/buffer.h"
-
-#include <applibs/gpio.h>
 
 typedef struct {
 
@@ -10,24 +7,20 @@ typedef struct {
 	int tx;
 	int rx;
 
-	// Pins' file descriptors
-	int txfd;
-	int rxfd;
-
 	// Current baudrate
 	int br;
 
-	// I/O buffers
-	buffer_t rxBuffer;
-	buffer_t txBuffer;
+	char lastCharRead;
+	int lastCharReadProcessed;
 
-	GPIO_Value_Type lastGPIOStatus;
+	int lastGPIOStatus;
 	int currentBitRead;
-	unsigned long long lastTimeRead;
 	char currentCharRead;
 
+	char nextCharWrite;
+	int nextCharWriteProcessed;
+
 	int currentBitWrite;
-	unsigned long long lastTimeWrite;
 	char currentCharWrite;
 
 } SoftwareSerial;
@@ -49,16 +42,4 @@ int setSSBaudRate(SoftwareSerial* s, int br);
 /// <param name="s"> The SoftwareSerial struct. </param>
 /// <returns> 0 if successful, -1 if not. </returns>
 int updateSS(SoftwareSerial* s);
-
-/// <summary> Adds data to the output buffer. WARNING: At speeds such as 9600 baud incominga data might get corrupted while writing. </summary>
-/// <param name="s"> The SoftwareSerial struct. </param>
-/// <param name="data"> The string to send. </param>
-/// <returns> 0 if successful, -1 if buffer full. </returns>
-int writeSS(SoftwareSerial* s, char* data);
-
-/// <summary> Reads a string from the buffer until CRLF or end. </summary>
-/// <param name="s"> The SoftwareSerial struct. </param>
-/// <param name="data"> Pointer for string output. </param>
-/// <returns> Length of the string if successful, -1 if buffer empty. </returns>
-int readStringSS(SoftwareSerial* s, char** data);
 
