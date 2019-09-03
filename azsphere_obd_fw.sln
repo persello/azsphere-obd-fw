@@ -22,6 +22,23 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "timer", "azsphere_obd_fw\li
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gpslib", "azsphere_obd_fw\lib\gpslib\gpslib.vcxproj", "{CD8A799B-2B14-4161-B7C2-5AD204158BF3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RTApp", "RTApp", "{C859E2C4-899E-41E2-9633-011480D1DB6E}"
+	ProjectSection(SolutionItems) = preProject
+		azsphere_obd_fw\rtcore-softserial\.gitignore = azsphere_obd_fw\rtcore-softserial\.gitignore
+		azsphere_obd_fw\rtcore-softserial\app_manifest.json = azsphere_obd_fw\rtcore-softserial\app_manifest.json
+		azsphere_obd_fw\rtcore-softserial\CMakeLists.txt = azsphere_obd_fw\rtcore-softserial\CMakeLists.txt
+		azsphere_obd_fw\rtcore-softserial\CMakeSettings.json = azsphere_obd_fw\rtcore-softserial\CMakeSettings.json
+		azsphere_obd_fw\rtcore-softserial\launch.vs.json = azsphere_obd_fw\rtcore-softserial\launch.vs.json
+		azsphere_obd_fw\rtcore-softserial\linker.ld = azsphere_obd_fw\rtcore-softserial\linker.ld
+		azsphere_obd_fw\rtcore-softserial\main.c = azsphere_obd_fw\rtcore-softserial\main.c
+		azsphere_obd_fw\rtcore-softserial\mt3620-baremetal.h = azsphere_obd_fw\rtcore-softserial\mt3620-baremetal.h
+		azsphere_obd_fw\rtcore-softserial\mt3620-intercore.c = azsphere_obd_fw\rtcore-softserial\mt3620-intercore.c
+		azsphere_obd_fw\rtcore-softserial\mt3620-intercore.h = azsphere_obd_fw\rtcore-softserial\mt3620-intercore.h
+		azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.c = azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.c
+		azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.h = azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.h
+		azsphere_obd_fw\rtcore-softserial\README.md = azsphere_obd_fw\rtcore-softserial\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM

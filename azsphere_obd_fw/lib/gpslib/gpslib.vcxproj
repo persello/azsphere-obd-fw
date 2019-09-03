@@ -13,12 +13,10 @@
   <ItemGroup>
     <ClCompile Include="gps.c" />
     <ClCompile Include="minmea.c" />
-    <ClCompile Include="softwareserial.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gps.h" />
     <ClInclude Include="minmea.h" />
-    <ClInclude Include="softwareserial.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{cd8a799b-2b14-4161-b7c2-5ad204158bf3}</ProjectGuid>
