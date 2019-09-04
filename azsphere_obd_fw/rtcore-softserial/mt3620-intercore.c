@@ -120,7 +120,7 @@ int EnqueueData(BufferHeader *inbound, BufferHeader *outbound, uint32_t bufSize,
         //Uart_WriteStringPoll("EnqueueData: not enough space to enqueue block\r\n");
 
 		// Reset
-		localWritePosition = remoteReadPosition;
+		outbound->writePosition = remoteReadPosition;
 
         return -1;
     }

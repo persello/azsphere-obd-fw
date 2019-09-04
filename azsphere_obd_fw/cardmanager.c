@@ -153,7 +153,7 @@ void logToSD(char* _data) {
 	// TODO: Implement a simple thread lock if necessary
 	for (int i = 0; i < strlen(buf); i++) {
 		if (putCharBuffer(&writeBuffer, buf[i]) == -1) {
-			Log_Debug("CARDMANAGER: Write buffer is full! Data will be lost!\n");
+			Log_Debug("CARDMANAGER: Write buffer is full! Losing new data!\n");
 			break;
 		}
 	}

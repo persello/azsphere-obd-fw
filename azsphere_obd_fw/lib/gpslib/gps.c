@@ -3,11 +3,14 @@
 #include "../../config.h"
 #include "minmea.h"
 #include "intercorecomm.h"
+#include "../../cardmanager.h"
 
 #include <pthread.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include <applibs/log.h>
+#include <applibs/rtc.h>
 
 pthread_t GPSThread;
 
@@ -45,12 +48,11 @@ void* GPSThreadMain(void* _param) {
 
 		// Now we have a CRLF terminated string. Let's decode it.
 
-
 		switch (minmea_sentence_id(sentence, false)) {
 		case MINMEA_SENTENCE_RMC: {
 			struct minmea_sentence_rmc frame;
 			if (minmea_parse_rmc(&frame, sentence)) {
-				Log_Debug("$RMC: raw coordinates and speed: (%d/%d,%d/%d) %d/%d\n",
+				/*Log_Debug("$RMC: raw coordinates and speed: (%d/%d,%d/%d) %d/%d\n",
 					frame.latitude.value, frame.latitude.scale,
 					frame.longitude.value, frame.longitude.scale,
 					frame.speed.value, frame.speed.scale);
@@ -61,28 +63,58 @@ void* GPSThreadMain(void* _param) {
 				Log_Debug("$RMC floating point degree coordinates and speed: (%f,%f) %f\n",
 					minmea_tocoord(&frame.latitude),
 					minmea_tocoord(&frame.longitude),
-					minmea_tofloat(&frame.speed));
-			}
-		} break;
+					minmea_tofloat(&frame.speed));*/
 
-		case MINMEA_SENTENCE_GGA: {
-			struct minmea_sentence_gga frame;
-			if (minmea_parse_gga(&frame, sentence)) {
-				Log_Debug("$GGA: fix quality: %d\n", frame.fix_quality);
-			}
-		} break;
+				// Time sync management
+				struct timespec now;
+				clock_gettime(CLOCK_REALTIME, &now);
 
-		case MINMEA_SENTENCE_GSV: {
-			struct minmea_sentence_gsv frame;
-			if (minmea_parse_gsv(&frame, sentence)) {
-				Log_Debug("$GSV: message %d of %d\n", frame.msg_nr, frame.total_msgs);
-				Log_Debug("$GSV: sattelites in view: %d\n", frame.total_sats);
-				for (int i = 0; i < 4; i++)
-					Log_Debug("$GSV: sat nr %d, elevation: %d, azimuth: %d, snr: %d dbm\n",
-						frame.sats[i].nr,
-						frame.sats[i].elevation,
-						frame.sats[i].azimuth,
-						frame.sats[i].snr);
+				struct timespec gpstime;
+				minmea_gettime(&gpstime, &frame.date, &frame.time);
+				
+				// More than 30 seconds out of sync
+				if (abs(now.tv_sec - gpstime.tv_sec) > 30) {
+
+					// Last log item with wrong time
+					logToSD("RTCOLDTIME\t?");
+
+					clock_settime(CLOCK_REALTIME, &gpstime);
+					clock_systohc();
+					Log_Debug("GPS: Time was synced to satellite.\n");
+
+					// First log item with correct time
+					logToSD("RTCNEWTIME\tGPS");
+				}
+
+				// Real-time location and speed data
+
+				realTimeGPSData.lat = minmea_tocoord(&frame.latitude);
+				realTimeGPSData.lon = minmea_tocoord(&frame.longitude);
+				realTimeGPSData.course = minmea_tofloat(&frame.course);
+				realTimeGPSData.speed = minmea_tofloat(&frame.speed) * 1.852f;	// Knots to km/h
+				
+				// Set to zero when reading in order to avoid duplicates
+				realTimeGPSData.newData = 1;
+
+				// Log data to SD card
+				char buf[100];
+
+				memset(buf, 0, 100);
+				sprintf(buf, "RTLATITUDE\t%f", realTimeGPSData.lat);
+				logToSD(buf);
+
+				memset(buf, 0, 100);
+				sprintf(buf, "RTLONGITUD\t%f", realTimeGPSData.lon);
+				logToSD(buf);
+
+				memset(buf, 0, 100);
+				sprintf(buf, "GPSSPEEDKM\t%f", realTimeGPSData.speed);
+				logToSD(buf);
+
+				memset(buf, 0, 100);
+				sprintf(buf, "GPSVCOURSE\t%f", realTimeGPSData.course);
+				logToSD(buf);
+
 			}
 		} break;
 		}
