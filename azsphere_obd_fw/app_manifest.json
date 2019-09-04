@@ -13,7 +13,8 @@
     "MutableStorage": {
       "SizeKB": 64
     },
-    "SystemTime": true
+    "SystemTime": true,
+    "AllowedApplicationConnections": [ "005180bc-402f-4cb3-a662-72937dbcde47" ]
   },
   "ApplicationType": "Default"
 }

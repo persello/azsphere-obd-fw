@@ -1,0 +1,11 @@
+{
+  "SchemaVersion": 1,
+  "Name": "rtcore-softserial",
+  "ComponentId": "005180bc-402f-4cb3-a662-72937dbcde47",
+  "EntryPoint": "/bin/app",
+  "Capabilities": {
+    "AllowedApplicationConnections": [ "4ef2cefc-2c95-418a-987e-3fda133fd663" ],
+    "Gpio": [ 0, 1, 43 ]
+  },
+  "ApplicationType": "RealTimeCapable"
+}

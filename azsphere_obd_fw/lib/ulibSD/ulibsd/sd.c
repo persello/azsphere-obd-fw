@@ -197,7 +197,10 @@ int wait_ready(void)	/* 1:OK, 0:Timeout */
 		dly_us(100);
 	}
 
-	return tmr ? 1 : 0;
+	// Some strange cards won't pass this routine
+	return 1;
+
+	//return tmr ? 1 : 0;
 }
 
 

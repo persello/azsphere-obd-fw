@@ -15,6 +15,7 @@
 #include "commandinterpreter.h"
 #include "config.h"
 #include "obdserial.h"
+#include "lib/gpslib/gps.h"
 
 
 
@@ -73,6 +74,9 @@ int main(void)
 
 	// Starts the serial with parameters specified in config.h.
 	startOBDThread();
+
+	// GPS
+	startGPSThread();
 
 	Log_Debug("MAIN: Initialization finished.\n");
 
