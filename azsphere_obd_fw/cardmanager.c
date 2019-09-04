@@ -3,6 +3,7 @@
 #include "config.h"
 #include "lib/circularbuffer/buffer.h"
 
+#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>

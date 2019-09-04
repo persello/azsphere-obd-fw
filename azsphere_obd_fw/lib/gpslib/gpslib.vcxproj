@@ -12,10 +12,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gps.c" />
+    <ClCompile Include="intercorecomm.c" />
     <ClCompile Include="minmea.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gps.h" />
+    <ClInclude Include="intercorecomm.h" />
     <ClInclude Include="minmea.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -35,7 +37,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <TargetSysroot>2</TargetSysroot>
+    <TargetSysroot>2+Beta1905</TargetSysroot>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">

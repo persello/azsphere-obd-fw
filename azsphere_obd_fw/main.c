@@ -76,7 +76,7 @@ int main(void)
 	startOBDThread();
 
 	// GPS
-	startGPSThreads();
+	startGPSThread();
 
 	Log_Debug("MAIN: Initialization finished.\n");
 

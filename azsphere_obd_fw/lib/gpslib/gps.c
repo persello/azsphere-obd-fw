@@ -2,7 +2,7 @@
 
 #include "../../config.h"
 #include "minmea.h"
-#include "softwareserial.h"
+#include "intercorecomm.h"
 
 #include <pthread.h>
 #include <string.h>
@@ -10,11 +10,8 @@
 #include <applibs/log.h>
 
 pthread_t GPSThread;
-pthread_t SerialThread;
-
 
 int GPSThreadStatus = 0;
-int SerialThreadStatus = 0;
 
 void* GPSThreadMain(void* _param) {
 
@@ -25,20 +22,25 @@ void* GPSThreadMain(void* _param) {
 
 		// Same as while(1) but exits on thread exit request
 		while (!GPSThreadStatus) {
-			char rec[80] = { };
-			readStringSS(&GPSSerial, &rec);
+			char* rec = malloc(MINMEA_MAX_LENGTH);
+			memset(rec, 0, MINMEA_MAX_LENGTH);
+			readStringSS(&rec);
 
 			// Add to sentence
-			if ((strlen(rec) + strlen(sentence)) < MINMEA_MAX_LENGTH - 5) {
+			if ((strlen(rec) + strlen(sentence)) < MINMEA_MAX_LENGTH - 1) {
 				strcat(sentence, rec);
 			}
 			else {
+
+				// Reset when full
 				memset(sentence, 0, MINMEA_MAX_LENGTH);
 			}
 
+			free(rec);
+
 			// Check for CRLF. If found, break.
 			char* ending = strrchr(sentence, '\r');
-			if (ending && !strcmp(sentence, "\r\n")) break;
+			if (ending && !strcmp(ending, "\r\n")) break;
 		}
 
 		// Now we have a CRLF terminated string. Let's decode it.
@@ -85,43 +87,30 @@ void* GPSThreadMain(void* _param) {
 		} break;
 		}
 	}
+
+	Log_Debug("GPS: Exiting from thread.\n");
 }
 
-void* SerialThreadMain(void* _param) {
+int startGPSThread()
+{
 
-	Log_Debug("GPS: SoftwareSerial thread started.\n");
+	Log_Debug("GPS: Trying to initialize SoftwareSerial and to start GPS thread.\n");
 
-	if (initializeSS(&GPSSerial, GPS_SOFT_TX, GPS_SOFT_RX) == 0) {
+	if (initSSSocket() == 0) {
 
 		// GPS thread
 		GPSThreadStatus = 0;
 		pthread_create(&GPSThread, NULL, GPSThreadMain, NULL);
 	}
 	else {
-		SerialThreadStatus = 1;
-		Log_Debug("GPS: Failed to initialize SoftwareSerial. Serial thread exiting now.\n");
+		Log_Debug("GPS: Failed to initialize SoftwareSerial.\n");
 	}
-
-	while (!SerialThreadStatus) {
-		updateSS(&GPSSerial);
-	}
-
-	Log_Debug("GPS: SoftwareSerial thread stopped.\n");
-}
-
-int startGPSThreads()
-{
-
-	// SoftwareSerial thread
-	SerialThreadStatus = 0;
-	pthread_create(&SerialThread, NULL, SerialThreadMain, NULL);
 
 	return 0;
 }
 
-int stopGPSThreads()
+int stopGPSThread()
 {
-	SerialThreadStatus = 1;
 	GPSThreadStatus = 1;
 
 	return 0;

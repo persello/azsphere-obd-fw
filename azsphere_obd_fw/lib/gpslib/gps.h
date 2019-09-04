@@ -1,9 +1,5 @@
 #pragma once
 
-#include "softwareserial.h"
+int startGPSThread();
 
-SoftwareSerial GPSSerial;
-
-int startGPSThreads();
-
-int stopGPSThreads();
+int stopGPSThread();

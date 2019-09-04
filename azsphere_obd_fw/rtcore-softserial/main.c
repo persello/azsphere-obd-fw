@@ -58,15 +58,15 @@ SoftwareSerial serial;
 static _Noreturn void RTCoreMain(void)
 {
 
-	Uart_Init();
-
-	Uart_WriteStringPoll("BOOT");
-
 	// SCB->VTOR = ExceptionVectorTable
 	WriteReg32(SCB_BASE, 0x08, (uint32_t)ExceptionVectorTable);
 
 	// Initialize software serial
 	initializeSS(&serial, 43, 1);
+
+	// Debug serial
+	Uart_Init();
+	Uart_WriteStringPoll("BOOT");
 
 	BufferHeader* outbound, * inbound;
 	uint32_t sharedBufSize = 0;
@@ -78,6 +78,7 @@ static _Noreturn void RTCoreMain(void)
 
 	for (;;) {
 
+		// Reads a bit from the software serial when it's time to do it
 		updateSS(&serial);
 
 		// Fresh data
@@ -85,7 +86,11 @@ static _Noreturn void RTCoreMain(void)
 
 			// Read from buffer happened
 			serial.lastCharReadProcessed = 1;
-			EnqueueData(inbound, outbound, sharedBufSize, serial.lastCharRead, 1);
+
+			// 16: Component ID, 4: reserved, 1: character.
+			char data[16 + 4 + 1] = { /* Component ID: (4 bytes little endian)*/ 0xfc, 0xce, 0xf2, 0x4e, /* 2 bytes little endian*/ 0x95, 0x2c, /* 2 bytes little endian*/ 0x8a, 0x41, /* Normal */ 0x98, 0x7e, 0x3f, 0xda, 0x13, 0x3f, 0xd6, 0x63, /* Reserved: */ 0x00, 0x28, 0x00, 0x03, /* Data: */ 0x00 };
+			data[20] = serial.lastCharRead;
+			EnqueueData(inbound, outbound, sharedBufSize, data, 21);
 		}
 	}
 }

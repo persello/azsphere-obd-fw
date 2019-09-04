@@ -28,7 +28,7 @@
 #define SD_CARD_SCK_PIN		31
 #define SD_CARD_CS_PIN		17								// Use 16 for slot 1.
 
-// Software serial for GPS
+// Software serial for GPS (see M4 RTApp)
 
 // #define GPS_SOFT_TX			43								// Slot 2 AN pin, use 42 for slot 1
 // #define GPS_SOFT_RX			1								// Slot 2 PWM pin, use 0 for slot 1

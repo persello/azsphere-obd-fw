@@ -59,12 +59,12 @@ int GetIntercoreBuffers(BufferHeader **outbound, BufferHeader **inbound, uint32_
     uint32_t outboundBufferSize = GetBufferSize(baseWrite);
 
     if (inboundBufferSize != outboundBufferSize) {
-        Uart_WriteStringPoll("GetIntercoreBuffers: Mismatched buffer sizes\r\n");
+        //Uart_WriteStringPoll("GetIntercoreBuffers: Mismatched buffer sizes\r\n");
         return -1;
     }
 
     if (inboundBufferSize <= sizeof(BufferHeader)) {
-        Uart_WriteStringPoll("GetIntercoreBuffers: buffer size smaller than header\n");
+        //Uart_WriteStringPoll("GetIntercoreBuffers: buffer size smaller than header\n");
         return -1;
     }
 
@@ -103,7 +103,7 @@ int EnqueueData(BufferHeader *inbound, BufferHeader *outbound, uint32_t bufSize,
     uint32_t localWritePosition = outbound->writePosition;
 
     if (remoteReadPosition >= bufSize) {
-        Uart_WriteStringPoll("EnqueueData: remoteReadPosition invalid\r\n");
+        //Uart_WriteStringPoll("EnqueueData: remoteReadPosition invalid\r\n");
         return -1;
     }
 
@@ -117,7 +117,11 @@ int EnqueueData(BufferHeader *inbound, BufferHeader *outbound, uint32_t bufSize,
 
     // If there isn't enough space to enqueue a block, then abort the operation.
     if (availSpace < sizeof(uint32_t) + dataSize + RINGBUFFER_ALIGNMENT) {
-        Uart_WriteStringPoll("EnqueueData: not enough space to enqueue block\r\n");
+        //Uart_WriteStringPoll("EnqueueData: not enough space to enqueue block\r\n");
+
+		// Reset
+		localWritePosition = remoteReadPosition;
+
         return -1;
     }
 
@@ -128,7 +132,7 @@ int EnqueueData(BufferHeader *inbound, BufferHeader *outbound, uint32_t bufSize,
     // There must be enough space between the write pointer and the end of the buffer to store the
     // block size as a contiguous 4-byte value. The remainder of message can wrap around.
     if (dataToEnd < sizeof(uint32_t)) {
-        Uart_WriteStringPoll("EnqueueData: not enough space for block size\r\n");
+        //Uart_WriteStringPoll("EnqueueData: not enough space for block size\r\n");
         return -1;
     }
 
@@ -167,7 +171,7 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
     uint32_t localReadPosition = outbound->readPosition;
 
     if (remoteWritePosition >= bufSize) {
-        Uart_WriteStringPoll("DequeueData: remoteWritePosition invalid\r\n");
+        //Uart_WriteStringPoll("DequeueData: remoteWritePosition invalid\r\n");
         return -1;
     }
 
@@ -184,7 +188,7 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
     // There must be at least four contiguous bytes to hold the block size.
     if (availData < sizeof(uint32_t)) {
         if (availData > 0) {
-            Uart_WriteStringPoll("DequeueData: availData < 4 bytes\r\n");
+            //Uart_WriteStringPoll("DequeueData: availData < 4 bytes\r\n");
         }
 
         return -1;
@@ -192,7 +196,7 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
 
     size_t dataToEnd = bufSize - localReadPosition;
     if (dataToEnd < sizeof(uint32_t)) {
-        Uart_WriteStringPoll("DequeueData: dataToEnd < 4 bytes\r\n");
+        //Uart_WriteStringPoll("DequeueData: dataToEnd < 4 bytes\r\n");
         return -1;
     }
 
@@ -200,13 +204,13 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
 
     // Ensure the block size is no greater than the available data.
     if (blockSize + sizeof(uint32_t) > availData) {
-        Uart_WriteStringPoll("DequeueData: message size greater than available data\r\n");
+        //Uart_WriteStringPoll("DequeueData: message size greater than available data\r\n");
         return -1;
     }
 
     // Abort if the caller-supplied buffer is not large enough to hold the message.
     if (blockSize > *dataSize) {
-        Uart_WriteStringPoll("DequeueData: message too large for buffer\r\n");
+        //Uart_WriteStringPoll("DequeueData: message too large for buffer\r\n");
         *dataSize = blockSize;
         return -1;
     }
