@@ -46,11 +46,14 @@
 
 // TARGET: 0.3: Basic GPS logger, time sync management.
 // TARGET: 0.4: Real time transmission to app.
+// TARGET: 1.0: Reading files from app.
 
 // TARGET: Read MIL and DTCs, send notification to app.
 // TARGET: Compass and advanced GPS parameters.
 // TARGET: Use of onboard sensors.
 // TARGET: Native SPI. Fast writing.
+// TARGET: Remote SD parameters (name, available space, delete files...).
+// TARGET: Migrate to epoll_timerfd.
 
 
 // TIMER LIST
