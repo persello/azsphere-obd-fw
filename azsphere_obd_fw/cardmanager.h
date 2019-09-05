@@ -6,6 +6,7 @@
 
 FATFS SD;
 FIL currentFile;
+bool SDmounted;
 
 /// <summary> Initializes the connected SD Card. </summary>
 void startSDThread(void);

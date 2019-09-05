@@ -15,7 +15,6 @@
 // ulibSD: SPI <-> block
 // FATFS: block <-> file system
 
-bool mounted = false;
 bool fileopened = false;
 pthread_t SDThread;
 
@@ -76,12 +75,12 @@ int mountSD() {
 
 	if (res == FR_OK) {
 		Log_Debug("CARDMANAGER: SD \"%s\" (%u) mounted successfully.\n", label, vsn);
-		mounted = true;
+		SDmounted = true;
 		return 0;
 	}
 	else {
 		Log_Debug("CARDMANAGER: SD card failed to mount. Error code is %d.\n", res);
-		mounted = false;
+		SDmounted = false;
 		return -1;
 	}
 
@@ -121,7 +120,7 @@ int unmountSD() {
 		s = -1;
 	}
 
-	mounted = false;
+	SDmounted = false;
 	return s;
 }
 
@@ -165,7 +164,7 @@ void* SDThreadMain(void* _param) {
 
 	while (!threadStatus) {
 
-		if (!mounted) {
+		if (!SDmounted) {
 
 			// We try to mount the file system continuously.
 			mountSD();
@@ -210,6 +209,8 @@ void* SDThreadMain(void* _param) {
 void startSDThread() {
 
 	Log_Debug("CARDMANAGER: Starting SD thread.\n");
+
+	SDmounted = false;
 
 	// Allow it to loop.
 	threadStatus = 0;

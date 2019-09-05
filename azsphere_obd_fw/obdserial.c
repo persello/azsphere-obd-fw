@@ -15,8 +15,6 @@
 
 #include <applibs/log.h>
 
-OBDModule OBD;
-
 buffer_t RXBuffer;
 buffer_t TXBuffer;
 
@@ -249,12 +247,12 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	initCircBuffer(&TXBuffer, 512);
 
 	// Reset the device
-	if (!sendATCommand("Z")) {
+	if (sendATCommand("Z") == -1) {
 		return -1;
 	}
 
 	// Echo off
-	if (!sendATCommand("E0")) {
+	if (sendATCommand("E0") == -1) {
 		return -1;
 	}
 
@@ -264,6 +262,8 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	// Finally, confirm the connection
 	_module->connected = 1;
 	_module->baudRate = _initialBaudRate;
+
+	Log_Debug("OBDSERIAL: Module initialized.\n");
 
 	return 0;
 }
@@ -360,18 +360,20 @@ void* OBDThreadMain(void* _param) {
 							// Logs the initialization
 							logToSD("CARECUINIT\t1");
 
+							Log_Debug("OBDSERIAL: Car initialized.\n");
+
 						}
 						// Wrong header
 						else {
 							// Let's reset the module
-							OBD.connected = 0;
+							// OBD.connected = 0;
 						}
 					}
 					// Wrong length
 					else {
 						
 						// Let's reset the module
-						OBD.connected = 0;
+						// OBD.connected = 0;
 					}
 				}
 				// ECU initialized, poll the parameters

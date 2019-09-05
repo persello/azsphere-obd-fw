@@ -13,6 +13,9 @@
 #include <applibs/log.h>
 #include <applibs/wificonfig.h>
 
+#include "obdserial.h"
+#include "cardmanager.h"
+
 
 typedef struct {
 	char header[5];
@@ -395,6 +398,111 @@ void* commandInterpreterThread(void* _param) {
 				}
 			}
 		}
+		// Is OBD module connected?
+		else if (!strcmp(currentCommand.header, "OBDC")) {
+			Log_Debug("COMMANDINT: Command decoded as OBD module connected request.\n");
+			answer = (char*)malloc(6 * sizeof(char));
+			memset(answer, 0, 6 * sizeof(char));
+			strcpy(answer, "OBDC");
+
+			// 1: Connected, 0: Disconnected
+			strcat(answer, OBD.connected ? "1" : "0");
+			answered = 1;
+		}
+		// Is car connected?
+		else if (!strcmp(currentCommand.header, "CARC")) {
+			Log_Debug("COMMANDINT: Command decoded as car connected request.\n");
+			answer = (char*)malloc(6 * sizeof(char));
+			memset(answer, 0, 6 * sizeof(char));
+			strcpy(answer, "CARC");
+
+			// 1: Connected, 0: Disconnected
+			strcat(answer, car.initialized ? "1" : "0");
+			answered = 1;
+		}
+		// Is SD card mounted?
+		else if (!strcmp(currentCommand.header, "SDMN")) {
+			Log_Debug("COMMANDINT: Command decoded as SD mounted request.\n");
+			answer = (char*)malloc(6 * sizeof(char));
+			memset(answer, 0, 6 * sizeof(char));
+			strcpy(answer, "SDMN");
+
+			// 1: Mounted, 0: Unmounted
+			strcat(answer, SDmounted ? "1" : "0");
+			answered = 1;
+		}
+		// SD card size
+		else if (!strcmp(currentCommand.header, "SDSZ")) {
+			Log_Debug("COMMANDINT: Command decoded as SD size request.\n");
+			answer = (char*)malloc(25 * sizeof(char));
+			memset(answer, 0, 25 * sizeof(char));
+
+
+			DWORD tot_sect;
+
+			/* Get total sectors and free sectors */
+			tot_sect = (SD.n_fatent - 2) * SD.csize;
+
+			/* Print the free space in KiB (assuming 512 bytes/sector) */
+			sprintf(answer, "SDSZ%lu", tot_sect / 2);
+
+			answered = 1;
+		}
+		// Get last file name
+		else if (!strcmp(currentCommand.header, "LFNM")) {
+			Log_Debug("COMMANDINT: Command decoded as current file name request.\n");
+
+			answer = (char*)malloc(25 * sizeof(char));
+			memset(answer, 0, 25 * sizeof(char));
+
+			char* name = malloc(16 * sizeof(char));
+			int i = 0;
+			FRESULT res;
+
+			// Search for files with incremental names.
+			do {
+				memset(name, 0, sizeof(name));
+				sprintf(name, "%d.log", i);
+				res = f_stat(name, NULL);
+				i++;
+			} while (res == FR_OK);
+
+			// O = OK
+			if (res == FR_NO_FILE) {
+
+				sprintf(name, "%d.log", i - 2);
+				sprintf(answer, "LFNMO%s", name);
+			}
+			// Error (E)
+			else {
+				sprintf(answer, "LFNME");
+			}
+
+			free(name);
+
+			answered = 1;
+		}
+		// Get file size
+		else if (!strcmp(currentCommand.header, "GFSZ")) {
+			Log_Debug("COMMANDINT: Command decoded as current file size request.\n");
+
+			answer = (char*)malloc(35 * sizeof(char));
+			memset(answer, 0, 35 * sizeof(char));
+
+			FILINFO fno;
+
+			// File exists, O = ok
+			if (f_stat(currentCommand.arguments, &fno) == FR_OK) {
+				sprintf(answer, "GFSZO%s#%d", fno.fname, (int)fno.fsize);
+			}
+			// File doesn't exist
+			else {
+				sprintf(answer, "GFSZE%s", currentCommand.arguments);
+			}
+
+			answered = 1;
+		}
+
 
 
 		// Answer with the requested data.
