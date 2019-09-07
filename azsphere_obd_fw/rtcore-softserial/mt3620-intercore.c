@@ -6,6 +6,7 @@
 #include "mt3620-baremetal.h"
 #include "mt3620-intercore.h"
 #include "mt3620-uart-poll.h"
+#include "softwareserial.h"
 
 static const uintptr_t MAILBOX_BASE = 0x21050000;
 
@@ -122,7 +123,7 @@ int EnqueueData(BufferHeader *inbound, BufferHeader *outbound, uint32_t bufSize,
 		// Reset
 		outbound->writePosition = remoteReadPosition;
 
-        return -1;
+        // return -1;
     }
 
     // Write up to end of buffer. If the block ends before then, only write up to the end of the
@@ -133,7 +134,11 @@ int EnqueueData(BufferHeader *inbound, BufferHeader *outbound, uint32_t bufSize,
     // block size as a contiguous 4-byte value. The remainder of message can wrap around.
     if (dataToEnd < sizeof(uint32_t)) {
         //Uart_WriteStringPoll("EnqueueData: not enough space for block size\r\n");
-        return -1;
+
+		// Reset
+		outbound->writePosition = remoteReadPosition;
+
+        // return -1;
     }
 
     uint32_t writeToEnd = sizeof(uint32_t) + dataSize;
@@ -164,16 +169,22 @@ int EnqueueData(BufferHeader *inbound, BufferHeader *outbound, uint32_t bufSize,
     return 0;
 }
 
+// MODIFIED in order to give SoftwareSerial priority since we have no interrupts
+
 int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize, void *dest,
                 uint32_t *dataSize)
 {
     uint32_t remoteWritePosition = inbound->writePosition;
     uint32_t localReadPosition = outbound->readPosition;
 
+	updateSS(&serial);
+
     if (remoteWritePosition >= bufSize) {
         //Uart_WriteStringPoll("DequeueData: remoteWritePosition invalid\r\n");
         return -1;
     }
+
+	updateSS(&serial);
 
     size_t availData;
     // If data is contiguous in buffer then difference between write and read positions...
@@ -185,6 +196,8 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
         availData = remoteWritePosition - localReadPosition + bufSize;
     }
 
+	updateSS(&serial);
+
     // There must be at least four contiguous bytes to hold the block size.
     if (availData < sizeof(uint32_t)) {
         if (availData > 0) {
@@ -194,6 +207,8 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
         return -1;
     }
 
+	updateSS(&serial);
+
     size_t dataToEnd = bufSize - localReadPosition;
     if (dataToEnd < sizeof(uint32_t)) {
         //Uart_WriteStringPoll("DequeueData: dataToEnd < 4 bytes\r\n");
@@ -202,11 +217,15 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
 
     uint32_t blockSize = *DataAreaOffset32(inbound, localReadPosition);
 
+	updateSS(&serial);
+
     // Ensure the block size is no greater than the available data.
     if (blockSize + sizeof(uint32_t) > availData) {
         //Uart_WriteStringPoll("DequeueData: message size greater than available data\r\n");
         return -1;
     }
+
+	updateSS(&serial);
 
     // Abort if the caller-supplied buffer is not large enough to hold the message.
     if (blockSize > *dataSize) {
@@ -218,12 +237,16 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
     // Tell the caller the actual block size.
     *dataSize = blockSize;
 
+	updateSS(&serial);
+
     // Read up to the end of the buffer. If the block ends before then, only read up to the end
     // of the block.
     uint32_t readFromEnd = dataToEnd - sizeof(uint32_t);
     if (blockSize < readFromEnd) {
         readFromEnd = blockSize;
     }
+
+	updateSS(&serial);
 
     const uint8_t *src8 = DataAreaOffset8(inbound, localReadPosition + sizeof(uint32_t));
     uint8_t *dest8 = dest;
@@ -237,6 +260,8 @@ int DequeueData(BufferHeader *outbound, BufferHeader *inbound, uint32_t bufSize,
     if (localReadPosition >= bufSize) {
         localReadPosition -= bufSize;
     }
+
+	updateSS(&serial);
 
     outbound->readPosition = localReadPosition;
 

@@ -14,6 +14,8 @@
 
 #include "softwareserial.h"
 
+// #define DEBUG
+
 extern uint32_t StackTop; // &StackTop == end of TCM0
 
 static _Noreturn void DefaultExceptionHandler(void);
@@ -53,8 +55,8 @@ static _Noreturn void DefaultExceptionHandler(void)
 	}
 }
 
-SoftwareSerial serial;
 
+int bufreceived = 0;
 static _Noreturn void RTCoreMain(void)
 {
 
@@ -76,21 +78,38 @@ static _Noreturn void RTCoreMain(void)
 		}
 	}
 
+	uint8_t buf[256];
+	uint32_t dataSize = sizeof(buf);
+	static const size_t payloadStart = 20;
+
 	for (;;) {
 
 		// Reads a bit from the software serial when it's time to do it
 		updateSS(&serial);
 
-		// Fresh data
-		if (serial.lastCharReadProcessed == 0) {
+		// On success, dataSize is set to the actual number of bytes which were read.
+		int r = DequeueData(outbound, inbound, sharedBufSize, buf, &dataSize);
+
+		updateSS(&serial);
+
+		if (r != -1 && dataSize >= payloadStart) {
+			bufreceived = 1;
+		}
+
+		updateSS(&serial);
+
+		// When we have a buffer and a new character is ready, send data to the other core.
+		if (serial.lastCharReadProcessed == 0 && bufreceived) {
 
 			// Read from buffer happened
 			serial.lastCharReadProcessed = 1;
 
-			// 16: Component ID, 4: reserved, 1: character.
-			char data[16 + 4 + 1] = { /* Component ID: (4 bytes little endian)*/ 0xfc, 0xce, 0xf2, 0x4e, /* 2 bytes little endian*/ 0x95, 0x2c, /* 2 bytes little endian*/ 0x8a, 0x41, /* Normal */ 0x98, 0x7e, 0x3f, 0xda, 0x13, 0x3f, 0xd6, 0x63, /* Reserved: */ 0x00, 0x28, 0x00, 0x03, /* Data: */ 0x00 };
-			data[20] = serial.lastCharRead;
-			EnqueueData(inbound, outbound, sharedBufSize, data, 21);
+#ifdef DEBUG
+			Uart_WriteStringPoll(&serial.lastCharRead);
+#endif
+
+			buf[payloadStart] = serial.lastCharRead;
+			EnqueueData(inbound, outbound, sharedBufSize, buf, dataSize);
 		}
 	}
 }

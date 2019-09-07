@@ -30,3 +30,8 @@ int readTCPString(char** _data);
 /// <param name="_data"> The string that will be put into the output buffer. </param>
 /// <returns> 0 if successful, -1 if the buffer was full. </returns>
 int writeTCPString(char* _data);
+
+/// <summary> Writes a single byte in the output buffer. </summary>
+/// <param name="_data"> The character that will be put into the output buffer. </param>
+/// <returns> 0 if successful, -1 if the buffer was full. </returns>
+int writeTCPChar(char _data);
