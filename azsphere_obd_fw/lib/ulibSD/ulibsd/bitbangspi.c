@@ -68,25 +68,19 @@ void SPI_CS_Init(void) {
 
 
 inline void SPI_MOSI_Set(unsigned char s) {
-	if (GPIO_SetValue(mosifd, s) != 0) {
-		Log_Debug("SPIIO: Cannot operate MOSI line. Details: \"%s\".\n", strerror(errno));
-	}
+	GPIO_SetValue(mosifd, s);
 }
 
 
 
 inline void SPI_SCK_Set(unsigned char s) {
-	if (GPIO_SetValue(sckfd, s) != 0) {
-		Log_Debug("SPIIO: Cannot operate SCK line. Details: \"%s\".\n", strerror(errno));
-	}
+	GPIO_SetValue(sckfd, s);
 }
 
 
 
 inline void SPI_CS_Set(unsigned char s) {
-	if (GPIO_SetValue(csfd, s) != 0) {
-		Log_Debug("SPIIO: Cannot operate CS line. Details: \"%s\".\n", strerror(errno));
-	}
+	GPIO_SetValue(csfd, s);
 }
 
 
@@ -94,11 +88,7 @@ inline void SPI_CS_Set(unsigned char s) {
 inline unsigned char SPI_MISO_Get(void) {
 
 	GPIO_Value_Type result;
-
-	if (GPIO_GetValue(misofd, &result) != 0) {
-		Log_Debug("SPIIO: Cannot read MISO line. Details: \"%s\".\n", strerror(errno));
-		return 0;
-	}
+	GPIO_GetValue(misofd, &result);
 
 	return result;
 }

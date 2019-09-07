@@ -7,14 +7,13 @@
 static const uintptr_t GPT_BASE = 0x21030000;
 
 int microseconds_wait = 0;
-const int CLK_CORRECTION = 15; // [us] Measured at 9600
 
 void Gpt3_StartUs(int microseconds)
 {
 	// Stop timer
 	WriteReg32(GPT_BASE, 0x50, 0x0);
 
-	microseconds_wait = microseconds - CLK_CORRECTION;
+	microseconds_wait = microseconds;
 
 	// GPT3_INIT = initial counter value
 	WriteReg32(GPT_BASE, 0x54, 0x0);

@@ -21,7 +21,7 @@ pthread_t SDThread;
 buffer_t writeBuffer;
 buffer_t readBuffer;
 
-int threadStatus = 0;
+int SDThreadTerminationRequest = 0;
 
 int newSession() {
 
@@ -158,11 +158,14 @@ void logToSD(char* _data) {
 	}
 }
 
+// After n tries SD gets unmounted. Resets at each successful sync.
+int syncTries = 0;
+
 void* SDThreadMain(void* _param) {
 
 	Log_Debug("CARDMANAGER: SD thread started.\n");
 
-	while (!threadStatus) {
+	while (!SDThreadTerminationRequest) {
 
 		if (!SDmounted) {
 
@@ -171,20 +174,47 @@ void* SDThreadMain(void* _param) {
 		}
 		else {
 
+			if (SDUnmountRequestFlag) {
+				unmountSD();
+				SDUnmountRequestFlag = 0;
+			}
+
 			if (fileopened) {
+
+				// Don't do anything if SDThreadLock is set.
 
 				// When the file is opened...
 				// Write from the circular buffer
 				char c;
-				while (getCharBuffer(&writeBuffer, &c) != -1) {
-					f_putc(c, &currentFile);
+				while (getCharBuffer(&writeBuffer, &c) != -1 && SDmounted && !SDThreadLock) {
+					if (f_putc(c, &currentFile) == -1) {
+						// unmountSD();
+					}
 				}
 
-				// Sync the changes to the SD card for safety reasons.
+				// Sync the changes to the SD card for safety reasons when possible.
 				// Also serves as SD insertion check (unmounts on fail).
-				if (f_sync(&currentFile) != FR_OK) {
-					unmountSD();
+				if (!SDThreadLock) {
+
+					// In case it was already inside
+					if (f_sync(&currentFile) != FR_OK) {
+
+						// Too many errors
+						if (syncTries > 5)
+							unmountSD();
+
+						syncTries++;
+					}
+					else {
+
+						// Reset
+						syncTries = 0;
+					}
 				}
+
+				// Let other threads know that I/O operations are stopped.
+				if (SDThreadLock == 1)
+					SDThreadLock = 2;
 			}
 			else {
 
@@ -210,10 +240,12 @@ void startSDThread() {
 
 	Log_Debug("CARDMANAGER: Starting SD thread.\n");
 
-	SDmounted = false;
+	// Mount and thread interaction handles
+	SDThreadLock = false;
+	SDUnmountRequestFlag = false;
 
 	// Allow it to loop.
-	threadStatus = 0;
+	SDThreadTerminationRequest = 0;
 
 	// Initialize the buffers
 	initCircBuffer(&writeBuffer, 4096);
@@ -232,5 +264,8 @@ void stopSDThread() {
 	Log_Debug("CARDMANAGER: Stopping SD thread.\n");
 
 	// Request to exit the loop
-	threadStatus = 1;
+	SDThreadTerminationRequest = 1;
+
+	// Open another file because the current might be read
+	fileopened = 0;
 }
