@@ -21,6 +21,11 @@ typedef struct {
 	char length;
 } OBDRequest;
 
+OBDModule OBD;
+
+/// <summary> Set to 1 to pause the thread. </summary>
+int OBDThreadLock;
+
 /// <summary> Intiializes a connected OBD (ST1110 or compatible) module's UART. </summary>
 /// <param name="_id"> The identificator of the UART to which the module is connected. </param>
 /// <param name="_module"> Returns the properties of the module. </param>

@@ -15,20 +15,18 @@
 
 #include <applibs/log.h>
 
-OBDModule OBD;
-
 buffer_t RXBuffer;
 buffer_t TXBuffer;
 
 pthread_t OBDThread;
 
-int threadStatus;
+int OBDThreadTerminationRequest;
 
 void OBDModule_Init(OBDModule* _module) {
 	_module->baudRate = -1;
 	_module->connected = 0;
 	_module->initialized = 1;
-	_module->uartfd = 0;
+	// _module->uartfd = 0; NO
 
 	// It is requested to initialize an UART_Config struct
 	UART_InitConfig(&_module->uartConfig);
@@ -89,8 +87,8 @@ int UART_Receive() {
 			}
 		}
 
-		// Exit when UART RX is empty and last char is '>' or when timer expires
-	} while ((fdresult > 0 || r != '>') && Timer_Status(TIMER_OBD_UART));
+		// Exit when UART RX is empty and last char is '>', when timer expires or a lock is requested
+	} while ((fdresult > 0 || r != '>') && Timer_Status(TIMER_OBD_UART) && !OBDThreadLock);
 
 	Timer_Off(TIMER_OBD_UART);
 
@@ -138,31 +136,31 @@ int getLastReceivedMessage(char** _output) {
 int sendOBDRequest(OBDRequest _request) {
 
 	// Output to device (2x (1 byte in ASCII (2 bytes)) + \r + NUL)
-	char* out = malloc(6 * sizeof(char));
-	memset(out, 0, 6 * sizeof(char));
+	char* OBDout = malloc(6 * sizeof(char));
+	memset(OBDout, 0, 6 * sizeof(char));
 
 	// Input (8 + 3x length)
 	// 8 = 5 are echoed response (mode (2), space (1), command (2)), 2 are ending space, \r and NUL
 	// 3x length is 1 byte in ASCII (2 bytes) for each byte in the answer and a space
 	int anslen = (8 + (3 * _request.length)) * sizeof(char);
-	char* in = malloc(anslen);
-	memset(in, 0, anslen);
+	char* OBDin = malloc(anslen);
+	memset(OBDin, 0, anslen);
 
 	// Sends request mode and PID in hexadecimal (4 bytes), followed by a \r
-	sprintf(out, "%02x%02x\r", _request.mode, _request.pid);
+	sprintf(OBDout, "%02x%02x\r", _request.mode, _request.pid);
 
 	// Loads output in the TX buffer
-	for (int i = 0; i < strlen(out); i++) {
-		if (putCharBuffer(&TXBuffer, out[i]) == -1) {
+	for (int i = 0; i < strlen(OBDout); i++) {
+		if (putCharBuffer(&TXBuffer, OBDout[i]) == -1) {
 			Log_Debug("OBDSERIAL: Unable to put OBD request in the TX buffer: buffer is full.\n");
-			free(out);
-			free(in);
+			free(OBDout);
+			free(OBDin);
 			return -1;
 		}
 	}
 
-	free(out);
-	free(in);
+	free(OBDout);
+	free(OBDin);
 
 	if (UART_Send() == -1) return -1;
 
@@ -172,22 +170,22 @@ int sendOBDRequest(OBDRequest _request) {
 int sendATCommand(char* _command) {
 
 	// Output to device (AT + command + \r + NUL)
-	char* out = malloc((4 + strlen(_command)) * sizeof(char));
-	memset(out, 0, (4 + strlen(_command)) * sizeof(char));
+	char* ATout = malloc((4 + strlen(_command)) * sizeof(char));
+	memset(ATout, 0, (4 + strlen(_command)) * sizeof(char));
 
 	// Creating the AT message
-	sprintf(out, "AT%s\r", _command);
+	sprintf(ATout, "AT%s\r", _command);
 
 	// Loads output in the TX buffer
-	for (int i = 0; i < strlen(out); i++) {
-		if (putCharBuffer(&TXBuffer, out[i]) == -1) {
+	for (int i = 0; i < strlen(ATout); i++) {
+		if (putCharBuffer(&TXBuffer, ATout[i]) == -1) {
 			Log_Debug("OBDSERIAL: Unable to put AT command in the TX buffer: buffer is full.\n");
-			free(out);
-			return -1;
+			// free(ATout);
+			// return -1; // Otherwise, how could the buffer get emptied?
 		}
 	}
 
-	free(out);
+	free(ATout);
 
 	if (UART_Send() == -1) return -1;
 	return UART_Receive();
@@ -196,22 +194,22 @@ int sendATCommand(char* _command) {
 int sendSTCommand(char* _command) {
 
 	// Output to device (ST + command + \r + NUL)
-	char* out = malloc((4 + strlen(_command)) * sizeof(char));
-	memset(out, 0, (4 + strlen(_command)) * sizeof(char));
+	char* STout = malloc((4 + strlen(_command)) * sizeof(char));
+	memset(STout, 0, (4 + strlen(_command)) * sizeof(char));
 
 	// Creating the ST message
-	sprintf(out, "ST%s\r", _command);
+	sprintf(STout, "ST%s\r", _command);
 
 	// Loads output in the TX buffer
-	for (int i = 0; i < strlen(out); i++) {
-		if (putCharBuffer(&TXBuffer, out[i]) == -1) {
+	for (int i = 0; i < strlen(STout); i++) {
+		if (putCharBuffer(&TXBuffer, STout[i]) == -1) {
 			Log_Debug("OBDSERIAL: Unable to put AT command in the TX buffer: buffer is full.\n");
-			free(out);
+			free(STout);
 			return -1;
 		}
 	}
 
-	free(out);
+	free(STout);
 
 	if (UART_Send() == -1) return -1;
 	return UART_Receive();
@@ -245,16 +243,19 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	}
 
 	// Initialize buffers
-	initCircBuffer(&RXBuffer, 512);
-	initCircBuffer(&TXBuffer, 512);
+	if (!RXBuffer.size)
+		initCircBuffer(&RXBuffer, 512);
+
+	if(!TXBuffer.size)
+		initCircBuffer(&TXBuffer, 512);
 
 	// Reset the device
-	if (!sendATCommand("Z")) {
+	if (sendATCommand("Z") == -1) {
 		return -1;
 	}
 
 	// Echo off
-	if (!sendATCommand("E0")) {
+	if (sendATCommand("E0") == -1) {
 		return -1;
 	}
 
@@ -264,6 +265,8 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	// Finally, confirm the connection
 	_module->connected = 1;
 	_module->baudRate = _initialBaudRate;
+
+	Log_Debug("OBDSERIAL: Module initialized.\n");
 
 	return 0;
 }
@@ -293,13 +296,13 @@ int initializeVehicleProperties(VehicleProperties* _car) {
 }
 
 void* OBDThreadMain(void* _param) {
-	while (!threadStatus) {
-		if (!OBD.connected) {
+	while (!OBDThreadTerminationRequest) {
+		if (!OBD.connected && !OBDThreadLock) {
 
 			// Disconnected
 			initOBDComm(OBD_SERIAL, &OBD, OBD_INITIAL_BR);
 		}
-		else {
+		else if (!OBDThreadLock) {
 
 			// Car not initialized
 			if (!car.initialized) {
@@ -360,19 +363,24 @@ void* OBDThreadMain(void* _param) {
 							// Logs the initialization
 							logToSD("CARECUINIT\t1");
 
+							Log_Debug("OBDSERIAL: Car initialized.\n");
+
 						}
 						// Wrong header
 						else {
 							// Let's reset the module
-							OBD.connected = 0;
+							// OBD.connected = 0;
 						}
 					}
 					// Wrong length
 					else {
-						
+
 						// Let's reset the module
-						OBD.connected = 0;
+						// OBD.connected = 0;
 					}
+
+					free(received);
+
 				}
 				// ECU initialized, poll the parameters
 			}
@@ -559,11 +567,17 @@ void* OBDThreadMain(void* _param) {
 								logToSD("CARECUINIT\t1");
 							}
 						}
+
+						free(received);
+
 					}
 				}
 			}
 		}
 	}
+
+	car.initialized = 0;
+	OBD.connected = 0;
 
 	Log_Debug("OBDSERIAL: OBD thread stopped.\n");
 }
@@ -575,7 +589,7 @@ void startOBDThread() {
 	Log_Debug("OBDSERIAL: Starting OBD thread.\n");
 
 	// Let it run
-	threadStatus = 0;
+	OBDThreadTerminationRequest = 0;
 	pthread_create(&OBDThread, NULL, OBDThreadMain, NULL);
 }
 
@@ -584,5 +598,5 @@ void stopOBDThread() {
 	Log_Debug("OBDSERIAL: Stopping OBD thread.\n");
 
 	// Exit from loop
-	threadStatus = 1;
+	OBDThreadTerminationRequest = 1;
 }

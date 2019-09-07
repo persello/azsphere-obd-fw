@@ -1,6 +1,5 @@
 #pragma once
 
-
 typedef struct {
 
 	// Pins
@@ -24,6 +23,10 @@ typedef struct {
 	char currentCharWrite;
 
 } SoftwareSerial;
+
+// The default SoftwareSerial
+SoftwareSerial serial;
+
 
 /// <summary> Initializas a new SoftwareSerial struct with specified pins, at 9600 bauds. </summary>
 /// <param name="s"> The SoftwareSerial struct to be initialized. </param>

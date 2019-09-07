@@ -12,6 +12,8 @@ typedef struct {
 
 GPSData realTimeGPSData;
 
+int GPSThreadLock;
+
 int startGPSThread();
 
 int stopGPSThread();

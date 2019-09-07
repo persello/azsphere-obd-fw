@@ -8,6 +8,8 @@
 
 // Debug pin
 const int pulse = 0;
+const int CLK_CORRECTION = 18; // [us] Measured at 9600
+
 
 int initializeSS(SoftwareSerial* s, int tx, int rx)
 {
@@ -70,7 +72,7 @@ int updateSS(SoftwareSerial* s)
 
 	// Restart timer if expired
 	if (!timerStatus) {
-		Gpt3_StartUs(1000000 / s->br);
+		Gpt3_StartUs((1000000 / s->br) - CLK_CORRECTION);
 	}
 
 	// Read (no return, otherwise it won't write)
@@ -130,40 +132,40 @@ int updateSS(SoftwareSerial* s)
 	// Write
 
 	// Time to write?
-	if (!timerStatus) {
-		int value;
+	//if (!timerStatus) {
+	//	int value;
 
-		// Start bit
-		if (s->currentBitWrite == 0) {
+	//	// Start bit
+	//	if (s->currentBitWrite == 0) {
 
-			// Loads a character, if the buffer is empty, stop.
-			if (s->nextCharWriteProcessed) {
-				s->currentCharWrite = s->nextCharWrite;
-				s->nextCharWriteProcessed = 0;
-			}
-			else {
-				return -1;
-			}
+	//		// Loads a character, if the buffer is empty, stop.
+	//		if (s->nextCharWriteProcessed) {
+	//			s->currentCharWrite = s->nextCharWrite;
+	//			s->nextCharWriteProcessed = 0;
+	//		}
+	//		else {
+	//			return -1;
+	//		}
 
-			value = 0;
-		}
-		// Stop bits (2 for safety)
-		else if (s->currentBitWrite == 9 | s->currentBitWrite == 10) {
-			value = 1;
-		}
-		// Data
-		else {
-			value = (s->currentCharWrite & (1 << (s->currentBitWrite - 1))) > 0;
-		}
+	//		value = 0;
+	//	}
+	//	// Stop bits (2 for safety)
+	//	else if (s->currentBitWrite == 9 | s->currentBitWrite == 10) {
+	//		value = 1;
+	//	}
+	//	// Data
+	//	else {
+	//		value = (s->currentCharWrite & (1 << (s->currentBitWrite - 1))) > 0;
+	//	}
 
-		// Write current bit on pin
-		Mt3620_Gpio_Write(s->tx, value);
+	//	// Write current bit on pin
+	//	Mt3620_Gpio_Write(s->tx, value);
 
-		// Increment bit index (0 to 10)
-		s->currentBitWrite++;
-		if (s->currentBitWrite == 11) s->currentBitWrite = 0;
+	//	// Increment bit index (0 to 10)
+	//	s->currentBitWrite++;
+	//	if (s->currentBitWrite == 11) s->currentBitWrite = 0;
 
-	}
+	//}
 
 	return 0;
 }

@@ -70,7 +70,7 @@ int main(void)
 	startTCPThreads();
 
 	// Connect the command interpreter to the TCP buffers.
-	startCommandInterpreter(readTCPString, writeTCPString);
+	startCommandInterpreter(readTCPString, writeTCPString, writeTCPChar);
 
 	// Starts the serial with parameters specified in config.h.
 	startOBDThread();
@@ -111,6 +111,8 @@ int main(void)
 	stopCommandInterpreter();
 	stopTCPThreads();
 	stopSDThread();
+	stopGPSThread();
+	stopOBDThread();
 
 	Log_Debug("MAIN: Services stopped. Exiting from application.\n");
 
