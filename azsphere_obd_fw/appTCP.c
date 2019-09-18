@@ -42,8 +42,7 @@ char* getWlanAddr(char* _interfaceName) {
 	Log_Debug("TCPIO: The selected interface is %s.\n", INTERFACE_NAME);
 
 	while (tmp)
-	{
-		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+	{		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
 		{
 			struct sockaddr_in* pAddr = (struct sockaddr_in*)tmp->ifa_addr;
 			Log_Debug("TCPIO: IP address of interface %s is: %s.\n", tmp->ifa_name, inet_ntoa(pAddr->sin_addr));

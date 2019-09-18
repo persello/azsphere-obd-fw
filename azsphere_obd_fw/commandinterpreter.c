@@ -532,6 +532,8 @@ void* commandInterpreterThread(void* _param) {
 		else if (!strcmp(currentCommand.header, "GFIL")) {
 			Log_Debug("COMMANDINT: Command decoded as file content request.\n");
 
+
+			// Save SDThreadLock before?
 			// Safe R/W
 			SDThreadLock = 1;
 

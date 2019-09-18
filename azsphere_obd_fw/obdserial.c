@@ -98,6 +98,9 @@ int UART_Receive() {
 		// Try to reconnect to the module
 		OBD.connected = 0;
 
+		car.initialized = 0;
+		logToSD("CARECUINIT\t0");
+
 		return -1;
 	}
 
@@ -256,6 +259,11 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 
 	// Echo off
 	if (sendATCommand("E0") == -1) {
+		return -1;
+	}
+
+	// Automatic protocol detection
+	if (sendATCommand("SP A0") == -1) {
 		return -1;
 	}
 
@@ -576,7 +584,10 @@ void* OBDThreadMain(void* _param) {
 		}
 	}
 
+
 	car.initialized = 0;
+	logToSD("CARECUINIT\t0");
+
 	OBD.connected = 0;
 
 	Log_Debug("OBDSERIAL: OBD thread stopped.\n");

@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <applibs/log.h>
 #include <applibs/rtc.h>
@@ -81,6 +82,9 @@ void* GPSThreadMain(void* _param) {
 
 						// Last log item with wrong time
 						logToSD("RTCOLDTIME\t?");
+
+						// Introduce a delay in order to flush all data to SD card
+						sleep(1);
 
 						clock_settime(CLOCK_REALTIME, &gpstime);
 						clock_systohc();

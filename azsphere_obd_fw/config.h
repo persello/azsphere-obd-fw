@@ -33,7 +33,7 @@
 // #define GPS_SOFT_TX			43								// Slot 2 AN pin, use 42 for slot 1
 // #define GPS_SOFT_RX			1								// Slot 2 PWM pin, use 0 for slot 1
 
-#define FW_VER			"0.2.1"
+#define FW_VER			"0.2.2"
 
 // 0.1.0: Base alpha FW.
 // 0.1.1: SD card mounted, basic SD I/O.
@@ -43,17 +43,22 @@
 
 // 0.2.0: First complete OBD data logger.
 // 0.2.1: GPS logger. Needs testing on board.
+// 0.2.2: GPS logging works, OBD needs testing again. File I/O over TCP ready for test with app.
 
-// TARGET: 0.3: Basic GPS logger, time sync management.
+// TARGET: 0.3: Target release, GPS and OBD logging is reliable and file transmission works (slow SPI).
 // TARGET: 0.4: Real time transmission to app.
-// TARGET: 1.0: Reading files from app.
 
-// TARGET: Read MIL and DTCs, send notification to app.
+// In order of priority:
+
+// TARGET: Start new session on B button press.
+// TARGET: Start new session when car gets disconnected.
+// TARGET: Smaller logs (differential time, shorter parameter names, three decimal places where possible...).
+// TARGET: Ping expiry also on the scanner in order to properly close TCP socket.
+// TARGET: Native SPI. Fast I/O.
+// TARGET: LED status.
 // TARGET: Compass and advanced GPS parameters.
 // TARGET: Use of onboard sensors.
-// TARGET: Native SPI. Fast writing.
-// TARGET: Remote SD parameters (name, available space, delete files...).
-// TARGET: Migrate to epoll_timerfd.
+// TARGET: Read MIL and DTCs, send notification to app.
 
 
 // TIMER LIST
