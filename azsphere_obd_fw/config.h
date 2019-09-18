@@ -23,10 +23,12 @@
 
 // Bit-banged SPI (until simultaneous R/W is supported by the native API)
 
-#define SD_CARD_MOSI_PIN	32
-#define SD_CARD_MISO_PIN	33
-#define SD_CARD_SCK_PIN		31
+#define SD_CARD_SPI			MT3620_SPI_ISU1
 #define SD_CARD_CS_PIN		17								// Use 16 for slot 1.
+#define SD_CARD_MOSI_AUX	43								// Use 42 for slot 1.
+
+#define SD_CARD_LOW_SPEED	100000
+#define SD_CARD_HIGH_SPEED	20000000
 
 // Software serial for GPS (see M4 RTApp)
 

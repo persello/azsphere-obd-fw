@@ -6,8 +6,9 @@
   "CmdArgs": [],
   "Capabilities": {
     "AllowedConnections": [],
-    "Gpio": [ 8, 9, 10, 12, 13, 17, 31, 32, 33 ],
+    "Gpio": [ 8, 9, 10, 12, 13, 17, 43 ],
     "Uart": [ "ISU0" ],
+    "SpiMaster": [ "ISU1" ],
     "AllowedTcpServerPorts": [ 15500 ],
     "WifiConfig": true,
     "MutableStorage": {
