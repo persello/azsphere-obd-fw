@@ -15,6 +15,7 @@
 #include "commandinterpreter.h"
 #include "config.h"
 #include "obdserial.h"
+#include "lib/gpslib/gps.h"
 
 
 
@@ -62,17 +63,20 @@ int main(void)
 
 	Log_Debug("MAIN: Starting all the threads.\n");
 
-	// The threads are initially stopped.
+	// The TCP threads are initially stopped.
 	TCPThreadStatus = STATUS_UNKNOWN;
 
 	// Starts TCP I/O threads.
 	startTCPThreads();
 
 	// Connect the command interpreter to the TCP buffers.
-	startCommandInterpreter(readTCPString, writeTCPString);
+	startCommandInterpreter(readTCPString, writeTCPString, writeTCPChar);
 
 	// Starts the serial with parameters specified in config.h.
-	initStandardOBDModule();
+	startOBDThread();
+
+	// GPS
+	startGPSThread();
 
 	Log_Debug("MAIN: Initialization finished.\n");
 
@@ -91,14 +95,13 @@ int main(void)
 		}
 		btnaprev = btnares;
 
-		GPIO_GetValue(btnbfd, &btnbres);
+		/*GPIO_GetValue(btnbfd, &btnbres);
 		if (btnbres == GPIO_Value_High && btnbprev == GPIO_Value_Low && TCPThreadStatus == STATUS_RUNNING) {
 			stopTCPThreads();
 			Log_Debug("MAIN: Button B pressed, resetting TCP threads.\n");
 		}
-		btnbprev = btnbres;
+		btnbprev = btnbres;*/
 
-		// TODO: Define 1 as stopping, 2 as stopped.
 		if (TCPThreadStatus == STATUS_STOPPED) {
 			Log_Debug("MAIN: TCP threads are stopped. Restarting...\n");
 			startTCPThreads();
@@ -108,6 +111,8 @@ int main(void)
 	stopCommandInterpreter();
 	stopTCPThreads();
 	stopSDThread();
+	stopGPSThread();
+	stopOBDThread();
 
 	Log_Debug("MAIN: Services stopped. Exiting from application.\n");
 

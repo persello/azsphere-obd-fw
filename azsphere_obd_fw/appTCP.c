@@ -42,8 +42,7 @@ char* getWlanAddr(char* _interfaceName) {
 	Log_Debug("TCPIO: The selected interface is %s.\n", INTERFACE_NAME);
 
 	while (tmp)
-	{
-		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+	{		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
 		{
 			struct sockaddr_in* pAddr = (struct sockaddr_in*)tmp->ifa_addr;
 			Log_Debug("TCPIO: IP address of interface %s is: %s.\n", tmp->ifa_name, inet_ntoa(pAddr->sin_addr));
@@ -54,9 +53,10 @@ char* getWlanAddr(char* _interfaceName) {
 		}
 		tmp = tmp->ifa_next;
 	}
+
 	Log_Debug("TCPIO: The specified interface was not found.\n");
 	freeifaddrs(addrs);
-	return "127.0.0.1";
+	return "";
 }
 
 int send_all(int _socket, char* _buffer)
@@ -74,6 +74,11 @@ int initSocket(void) {
 
 	wlan_addr = getWlanAddr(INTERFACE_NAME);	// Getting wlan0's IP address
 
+	// When interface is not available, fail.
+	if (!strlen(wlan_addr)) {
+		return -1;
+	}
+
 	memset(&ServerIp, '0', sizeof(ServerIp));	// Sets ServerIp to 0 (for its entire length)
 
 	ServerIp.sin_family = AF_INET;						// IPv4
@@ -84,7 +89,7 @@ int initSocket(void) {
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1, sizeof(int));
 
 	// Try to bind sock and ServerIp
-	if (bind(sock, (struct sockaddr*) &ServerIp, sizeof(ServerIp)) == -1) {
+	if (bind(sock, (struct sockaddr*) & ServerIp, sizeof(ServerIp)) == -1) {
 		Log_Debug("TCPIO: Socket binding failed. ERROR: \"%s\".\n", strerror(errno));
 		return -1;
 	}
@@ -149,6 +154,16 @@ int readTCPString(char* _data[]) {
 	return result;
 }
 
+// For file transmission only
+int writeTCPChar(char _data) {
+	if (_data == '\r') {
+		putCharBuffer(&outputBuffer, _data);
+		_data = '\n';
+	}
+
+	return (putCharBuffer(&outputBuffer, _data));
+}
+
 int writeTCPString(char* _data) {
 
 	size_t length = strlen(_data);
@@ -191,16 +206,16 @@ void* TCPSendThread(void* _param) {
 		if (outputBuffer.status != BUFFER_EMPTY) {
 
 			// Buffer for calculating minimum size.
-			char buf[1024];
+			char buf[outputBuffer.size];
 			int i = 0;
 
-			memset(buf, 0, 1024);
+			memset(buf, 0, outputBuffer.size);
 
 			// Load all the contents of the buffer into the output string.
-			while (outputBuffer.status != BUFFER_EMPTY) {
+			while (outputBuffer.status != BUFFER_EMPTY && i < outputBuffer.size) {
 				getCharBuffer(&outputBuffer, &buf[i++]);
 			}
-			
+
 			char snd[strlen(buf) + 1];
 			snd[0] = '\0';
 			strcpy(snd, buf);
@@ -214,7 +229,7 @@ void* TCPSendThread(void* _param) {
 	close(sock);
 	pthread_cancel(receiveThread);
 	sleep(1);
-	Log_Debug("TCPIO: TCP thread closed. Last error was \"%s\".\n", strerror(errno));
+	Log_Debug("TCPIO: TCP send thread closed. Last error was \"%s\".\n", strerror(errno));
 	TCPThreadStatus = STATUS_STOPPED;
 
 	return NULL;
@@ -224,7 +239,7 @@ void* TCPReceiveThread(void* _param) {
 
 	// Allow the thread to be halted while blocking
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	
+
 	Log_Debug("TCPIO: TCP receive thread started.\n");
 
 	// Try starting the socket, exits immediately on fail. Waits until socket is open (blocking).
@@ -261,6 +276,12 @@ void* TCPReceiveThread(void* _param) {
 			}
 		}
 	}
+
+	shutdown(sock, 2);
+	close(client_conn);
+	close(sock);
+	Log_Debug("TCPIO: TCP receive thread closed. Last error was \"%s\".\n", strerror(errno));
+	TCPThreadStatus = STATUS_STOPPED;
 	return NULL;
 }
 
@@ -271,8 +292,11 @@ void startTCPThreads() {
 	TCPThreadStatus = STATUS_STARTING;
 
 	// Buffer initialization.
-	initCircBuffer(&inputBuffer, 1024);
-	initCircBuffer(&outputBuffer, 1024);
+	if (!inputBuffer.size)
+		initCircBuffer(&inputBuffer, 1024);
+
+	if (!outputBuffer.size)
+		initCircBuffer(&outputBuffer, 20000);	// Big for fast file output
 
 	// We load some initialization data into the output buffer (FW version and other).
 	writeTCPString(init_data);

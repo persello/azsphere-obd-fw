@@ -37,8 +37,9 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
-    <UseMultiToolTask>false</UseMultiToolTask>
+    <UseMultiToolTask>true</UseMultiToolTask>
     <LibraryPath>C:\Users\ricca\Projects\Azure Sphere\azsphere_obd_fw\azsphere_obd_fw\lib\circularbuffer;$(LibraryPath)</LibraryPath>
+    <PartnerComponents>005180bc-402f-4cb3-a662-72937dbcde47</PartnerComponents>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="cardmanager.c" />
@@ -65,6 +66,12 @@
     <ProjectReference Include="lib\fatfs\fatfs.vcxproj">
       <Project>{7470474c-8f6d-45d3-a561-8fee2af1f17c}</Project>
     </ProjectReference>
+    <ProjectReference Include="lib\gpslib\gpslib.vcxproj">
+      <Project>{cd8a799b-2b14-4161-b7c2-5ad204158bf3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="lib\timer\timer.vcxproj">
+      <Project>{f630f6ff-35d6-4b97-b156-de7821e061e9}</Project>
+    </ProjectReference>
     <ProjectReference Include="lib\ulibSD\ulibsd\ulibsd.vcxproj">
       <Project>{ce7e440d-1ba1-4aaa-b9b9-5cc981407b27}</Project>
     </ProjectReference>
@@ -73,7 +80,7 @@
   <ImportGroup Label="ExtensionTargets" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalOptions>-Werror=implicit-function-declaration %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Werror=implicit-function-declaration %(AdditionalOptions) -Dtimegm=mktime</AdditionalOptions>
       <Verbose Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</Verbose>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

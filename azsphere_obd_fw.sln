@@ -6,15 +6,37 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "azsphere_obd_fw", "azsphere_obd_fw\azsphere_obd_fw.vcxproj", "{95AE978D-9402-4ACF-B2C3-010546A353B8}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF} = {A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}
+		{F630F6FF-35D6-4B97-B156-DE7821E061E9} = {F630F6FF-35D6-4B97-B156-DE7821E061E9}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ulibsd", "azsphere_obd_fw\lib\ulibSD\ulibsd\ulibsd.vcxproj", "{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdlib", "azsphere_obd_fw\lib\ulibSD\ulibsd\ulibsd.vcxproj", "{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "circularbuffer", "azsphere_obd_fw\lib\circularbuffer\circularbuffer.vcxproj", "{A7E253A3-E5CA-4965-AE9C-0E3F65A709CF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fatfs", "azsphere_obd_fw\lib\fatfs\fatfs.vcxproj", "{7470474C-8F6D-45D3-A561-8FEE2AF1F17C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CE7E440D-1BA1-4AAA-B9B9-5CC981407B27} = {CE7E440D-1BA1-4AAA-B9B9-5CC981407B27}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "timer", "azsphere_obd_fw\lib\timer\timer.vcxproj", "{F630F6FF-35D6-4B97-B156-DE7821E061E9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gpslib", "azsphere_obd_fw\lib\gpslib\gpslib.vcxproj", "{CD8A799B-2B14-4161-B7C2-5AD204158BF3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RTApp", "RTApp", "{C859E2C4-899E-41E2-9633-011480D1DB6E}"
+	ProjectSection(SolutionItems) = preProject
+		azsphere_obd_fw\rtcore-softserial\.gitignore = azsphere_obd_fw\rtcore-softserial\.gitignore
+		azsphere_obd_fw\rtcore-softserial\app_manifest.json = azsphere_obd_fw\rtcore-softserial\app_manifest.json
+		azsphere_obd_fw\rtcore-softserial\CMakeLists.txt = azsphere_obd_fw\rtcore-softserial\CMakeLists.txt
+		azsphere_obd_fw\rtcore-softserial\CMakeSettings.json = azsphere_obd_fw\rtcore-softserial\CMakeSettings.json
+		azsphere_obd_fw\rtcore-softserial\launch.vs.json = azsphere_obd_fw\rtcore-softserial\launch.vs.json
+		azsphere_obd_fw\rtcore-softserial\linker.ld = azsphere_obd_fw\rtcore-softserial\linker.ld
+		azsphere_obd_fw\rtcore-softserial\main.c = azsphere_obd_fw\rtcore-softserial\main.c
+		azsphere_obd_fw\rtcore-softserial\mt3620-baremetal.h = azsphere_obd_fw\rtcore-softserial\mt3620-baremetal.h
+		azsphere_obd_fw\rtcore-softserial\mt3620-intercore.c = azsphere_obd_fw\rtcore-softserial\mt3620-intercore.c
+		azsphere_obd_fw\rtcore-softserial\mt3620-intercore.h = azsphere_obd_fw\rtcore-softserial\mt3620-intercore.h
+		azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.c = azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.c
+		azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.h = azsphere_obd_fw\rtcore-softserial\mt3620-uart-poll.h
+		azsphere_obd_fw\rtcore-softserial\README.md = azsphere_obd_fw\rtcore-softserial\README.md
 	EndProjectSection
 EndProject
 Global
@@ -39,6 +61,14 @@ Global
 		{7470474C-8F6D-45D3-A561-8FEE2AF1F17C}.Debug|ARM.Build.0 = Debug|ARM
 		{7470474C-8F6D-45D3-A561-8FEE2AF1F17C}.Release|ARM.ActiveCfg = Release|ARM
 		{7470474C-8F6D-45D3-A561-8FEE2AF1F17C}.Release|ARM.Build.0 = Release|ARM
+		{F630F6FF-35D6-4B97-B156-DE7821E061E9}.Debug|ARM.ActiveCfg = Debug|ARM
+		{F630F6FF-35D6-4B97-B156-DE7821E061E9}.Debug|ARM.Build.0 = Debug|ARM
+		{F630F6FF-35D6-4B97-B156-DE7821E061E9}.Release|ARM.ActiveCfg = Release|ARM
+		{F630F6FF-35D6-4B97-B156-DE7821E061E9}.Release|ARM.Build.0 = Release|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Debug|ARM.ActiveCfg = Debug|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Debug|ARM.Build.0 = Debug|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Release|ARM.ActiveCfg = Release|ARM
+		{CD8A799B-2B14-4161-B7C2-5AD204158BF3}.Release|ARM.Build.0 = Release|ARM
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
