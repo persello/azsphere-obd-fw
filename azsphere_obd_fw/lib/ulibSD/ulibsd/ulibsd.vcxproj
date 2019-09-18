@@ -12,11 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sd.h" />
-    <ClInclude Include="bitbangspi.h" />
+    <ClInclude Include="spi.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sd.c" />
-    <ClCompile Include="bitbangspi.c" />
     <ClCompile Include="spi.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -18,15 +18,12 @@
     <ClInclude Include="sd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bitbangspi.h">
+    <ClInclude Include="spi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="bitbangspi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="spi.c">
