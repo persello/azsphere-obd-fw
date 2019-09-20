@@ -116,19 +116,32 @@ int getLastReceivedMessage(char** _output) {
 	memset(buf, 0, 1024);
 
 	char r;
+	char previous = 0x00;
 
 	while (getCharBuffer(&RXBuffer, &r) != -1) {
-		if (r == '>') break;
+
+		// Discard everything except last message
+		if (previous == '>') {
+			memset(buf, 0, 1024);
+			length = 0;
+		}
+
 		buf[length] = r;
 		length++;
+		previous = r;
 	}
 
-	// Allocate the needed size (length + terminator)
-	*_output = malloc((length + 1) * sizeof(char));
-	memset(*_output, 0, length + 1);
+	// Length has to be at least 1 for a valid message
+	if (length > 0) {
 
-	// Copy the result to the final buffer
-	strncpy(*_output, buf, length);
+		// Allocate the needed size (length + terminator ---but no '>'---)
+		*_output = malloc((length) * sizeof(char));
+		memset(*_output, 0, length);
+
+		// Copy the result to the final buffer
+		strncpy(*_output, buf, length - 1);
+
+	}
 
 	// Big temporary buffer not needed anymore
 	free(buf);
@@ -331,6 +344,9 @@ void* OBDThreadMain(void* _param) {
 				}
 				else {
 
+					// Some cars (VW Golf Mk. 3/4) won't answer to the first message if continuously pinged.
+					sleep(3);
+
 					char* received;
 					getLastReceivedMessage(&received);
 
@@ -400,10 +416,14 @@ void* OBDThreadMain(void* _param) {
 				getLastReceivedMessage(&voltagestr);
 
 				// We received back voltage information
-				if (strncmp(&voltagestr, "ATRV\r", 5) == 0) {
+
+				// TODO: Fix this. ATRV does not echo ATRV back.
+				if (/*strncmp(&voltagestr, "ATRV\r", 5) == 0*/ 1) {
 
 					// Convert from string
-					float voltage = strtof(voltagestr + 5, NULL);
+
+					// TODO: This should be set to voltagestr + 5 when you receive ATRV\r before the voltage reading
+					float voltage = strtof(voltagestr, NULL);
 					Log_Debug("OBDSERIAL: Battery voltage is %f volts.\n", voltage);
 
 					char* result = malloc(30);
@@ -563,6 +583,12 @@ void* OBDThreadMain(void* _param) {
 								else {
 									car.initialized = 0;
 
+									// Protocol close
+									sendATCommand("PC");
+
+									// Reinitialize module
+									OBD.connected = 0;
+
 									// Logs the deinitialization
 									logToSD("CARECUINIT\t1");
 								}
@@ -570,6 +596,12 @@ void* OBDThreadMain(void* _param) {
 							// Incorrect length: need to reinitialize car (module resets when car initialization fails)
 							else {
 								car.initialized = 0;
+
+								// Protocol close
+								sendATCommand("PC");
+
+								// Reinitialize module
+								OBD.connected = 0;
 
 								// Logs the deinitialization
 								logToSD("CARECUINIT\t1");
