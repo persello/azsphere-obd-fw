@@ -47,7 +47,7 @@
 // 0.2.1: GPS logger. Needs testing on board.
 // 0.2.2: GPS logging works, OBD needs testing again. File I/O over TCP ready for test with app.
 
-// TARGET: 0.3: Target release, GPS and OBD logging is reliable and file transmission works (slow SPI).
+// TARGET: 0.3: Target release, fast SPI interfacing works, GPS and OBD logging is reliable and file transmission works.
 // TARGET: 0.4: Real time transmission to app.
 
 // In order of priority:
@@ -55,15 +55,19 @@
 // TARGET: Start new session on B button press.
 // TARGET: Start new session when car gets disconnected.
 // TARGET: Smaller logs (differential time, shorter parameter names, three decimal places where possible...).
+// TARGET: Save debug logs to SD card.
 // TARGET: Ping expiry also on the scanner in order to properly close TCP socket.
-// TARGET: Native SPI. Fast I/O.
 // TARGET: LED status.
 // TARGET: Compass and advanced GPS parameters.
 // TARGET: Use of onboard sensors.
 // TARGET: Read MIL and DTCs, send notification to app.
+// TARGET: Switch to epoll timer.
 
 
 // TIMER LIST
 
-#define TIMER_OBD_UART			0
-#define TIMER_OBD_UART_DURATION	5000
+#define TIMER_OBD_UART				0
+#define TIMER_OBD_UART_DURATION		5000
+
+#define TIMER_TCP_RESTART			1
+#define TIMER_TCP_RESTART_DURATION	30000
