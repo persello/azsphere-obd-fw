@@ -5,7 +5,7 @@
   "EntryPoint": "/bin/app",
   "Capabilities": {
     "AllowedApplicationConnections": [ "4ef2cefc-2c95-418a-987e-3fda133fd663" ],
-    "Gpio": [ 0, 1, 43 ]
+    "Gpio": [ 0, 1 ]
   },
   "ApplicationType": "RealTimeCapable"
 }

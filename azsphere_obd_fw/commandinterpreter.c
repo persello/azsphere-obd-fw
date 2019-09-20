@@ -16,6 +16,7 @@
 #include "obdserial.h"
 #include "cardmanager.h"
 #include "lib/gpslib/gps.h"
+#include "lib/timer/Inc/Public/timer.h"
 
 
 typedef struct {
@@ -532,6 +533,8 @@ void* commandInterpreterThread(void* _param) {
 		else if (!strcmp(currentCommand.header, "GFIL")) {
 			Log_Debug("COMMANDINT: Command decoded as file content request.\n");
 
+
+			// Save SDThreadLock before?
 			// Safe R/W
 			SDThreadLock = 1;
 
@@ -580,6 +583,10 @@ void* commandInterpreterThread(void* _param) {
 				// Esists
 				if (f_open(&file, currentCommand.arguments, FA_READ) == FR_OK) {
 
+
+					// Start reading
+					unsigned long long transferstart = nanos();
+
 					// Send header (S = start)
 					sprintf(answer, "GFILS%s", currentCommand.arguments);
 					(*cisend)(answer);
@@ -620,6 +627,10 @@ void* commandInterpreterThread(void* _param) {
 
 					free(buf);
 					f_close(&file);
+
+					unsigned long long transferend = nanos();
+
+					unsigned long long elapsed = transferend - transferstart;
 
 					// Send footer (O = ok)
 					memset(answer, 0, 35 * sizeof(char));

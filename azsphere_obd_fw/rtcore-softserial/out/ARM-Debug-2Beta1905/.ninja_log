@@ -1,0 +1,13 @@
+# ninja log v5
+9	318	590516085	CMakeFiles/rtcore-softserial.dir/mt3620-uart-poll.c.obj	3ae573aadc6381f0
+1	326	590516085	CMakeFiles/rtcore-softserial.dir/main.c.obj	9327f63adebb8d41
+28	329	590516085	CMakeFiles/rtcore-softserial.dir/mt3620-timer-poll.c.obj	3b1eb4278c357b00
+14	330	590516085	CMakeFiles/rtcore-softserial.dir/mt3620-intercore.c.obj	e7b07c290a213705
+35	362	590516085	CMakeFiles/rtcore-softserial.dir/softwareserial.c.obj	135bf384d1fa26aa
+21	368	590516085	CMakeFiles/rtcore-softserial.dir/mt3620-gpio.c.obj	c120a3a0cd2c9feb
+369	578	590516085	rtcore-softserial.out	9d76ce5e6dc48b38
+579	612	590502913	approotrtcore-softserial/app_manifest.json	a3349b3be3d3b8f7
+584	814	590516086	approotrtcore-softserial/bin/app	7bb986aa93598d9f
+814	1628	590516086	rtcore-softserial.imagepackage	7179eb387fafa377
+2	52	590516607	approotrtcore-softserial/app_manifest.json	a3349b3be3d3b8f7
+53	978	590516751	rtcore-softserial.imagepackage	7179eb387fafa377

@@ -23,17 +23,19 @@
 
 // Bit-banged SPI (until simultaneous R/W is supported by the native API)
 
-#define SD_CARD_MOSI_PIN	32
-#define SD_CARD_MISO_PIN	33
-#define SD_CARD_SCK_PIN		31
+#define SD_CARD_SPI			MT3620_SPI_ISU1
 #define SD_CARD_CS_PIN		17								// Use 16 for slot 1.
+#define SD_CARD_MOSI_AUX	43								// Use 42 for slot 1.
+
+#define SD_CARD_LOW_SPEED	100000
+#define SD_CARD_HIGH_SPEED	20000000
 
 // Software serial for GPS (see M4 RTApp)
 
 // #define GPS_SOFT_TX			43								// Slot 2 AN pin, use 42 for slot 1
 // #define GPS_SOFT_RX			1								// Slot 2 PWM pin, use 0 for slot 1
 
-#define FW_VER			"0.2.1"
+#define FW_VER			"0.2.2"
 
 // 0.1.0: Base alpha FW.
 // 0.1.1: SD card mounted, basic SD I/O.
@@ -43,20 +45,29 @@
 
 // 0.2.0: First complete OBD data logger.
 // 0.2.1: GPS logger. Needs testing on board.
+// 0.2.2: GPS logging works, OBD needs testing again. File I/O over TCP ready for test with app.
 
-// TARGET: 0.3: Basic GPS logger, time sync management.
+// TARGET: 0.3: Target release, fast SPI interfacing works, GPS and OBD logging is reliable and file transmission works.
 // TARGET: 0.4: Real time transmission to app.
-// TARGET: 1.0: Reading files from app.
 
-// TARGET: Read MIL and DTCs, send notification to app.
+// In order of priority:
+
+// TARGET: Start new session on B button press.
+// TARGET: Start new session when car gets disconnected.
+// TARGET: Smaller logs (differential time, shorter parameter names, three decimal places where possible...).
+// TARGET: Save debug logs to SD card.
+// TARGET: Ping expiry also on the scanner in order to properly close TCP socket.
+// TARGET: LED status.
 // TARGET: Compass and advanced GPS parameters.
 // TARGET: Use of onboard sensors.
-// TARGET: Native SPI. Fast writing.
-// TARGET: Remote SD parameters (name, available space, delete files...).
-// TARGET: Migrate to epoll_timerfd.
+// TARGET: Read MIL and DTCs, send notification to app.
+// TARGET: Switch to epoll timer.
 
 
 // TIMER LIST
 
-#define TIMER_OBD_UART			0
-#define TIMER_OBD_UART_DURATION	5000
+#define TIMER_OBD_UART				0
+#define TIMER_OBD_UART_DURATION		5000
+
+#define TIMER_TCP_RESTART			1
+#define TIMER_TCP_RESTART_DURATION	30000

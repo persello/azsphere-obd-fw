@@ -248,8 +248,8 @@ void startSDThread() {
 	SDThreadTerminationRequest = 0;
 
 	// Initialize the buffers
-	initCircBuffer(&writeBuffer, 4096);
-	initCircBuffer(&readBuffer, 4096);
+	initCircBuffer(&writeBuffer, 32768);
+	initCircBuffer(&readBuffer, 8196);
 
 	char opening[100] = { };
 	sprintf(&opening, "ASPHEREOBD\tV%s", FW_VER);

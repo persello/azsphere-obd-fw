@@ -30,8 +30,8 @@ int initializeSS(SoftwareSerial* s, int tx, int rx)
 	Mt3620_Gpio_AddBlock(&adc0);
 
 	// TX
-	Mt3620_Gpio_ConfigurePinForOutput(tx);
-	Mt3620_Gpio_Write(tx, 1);
+	/*Mt3620_Gpio_ConfigurePinForOutput(tx);
+	Mt3620_Gpio_Write(tx, 1);*/
 
 	// RX
 	Mt3620_Gpio_ConfigurePinForInput(rx);
