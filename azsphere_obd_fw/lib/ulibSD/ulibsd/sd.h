@@ -7,7 +7,7 @@
 #ifndef _DISKIO_DEFINED
 #define _DISKIO_DEFINED
 
-#include "bitbangspi.h"
+#include "spi.h"
 
 #define CT_SD1		0x00
 #define CT_SD2		0x01

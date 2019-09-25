@@ -6,14 +6,16 @@
   "CmdArgs": [],
   "Capabilities": {
     "AllowedConnections": [],
-    "Gpio": [ 8, 9, 10, 12, 13, 17, 31, 32, 33 ],
+    "Gpio": [ 8, 9, 10, 12, 13, 17, 43 ],
     "Uart": [ "ISU0" ],
+    "SpiMaster": [ "ISU1" ],
     "AllowedTcpServerPorts": [ 15500 ],
     "WifiConfig": true,
     "MutableStorage": {
       "SizeKB": 64
     },
-    "SystemTime": true
+    "SystemTime": true,
+    "AllowedApplicationConnections": [ "005180bc-402f-4cb3-a662-72937dbcde47" ]
   },
   "ApplicationType": "Default"
 }

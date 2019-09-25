@@ -13,6 +13,11 @@
 #include <applibs/log.h>
 #include <applibs/wificonfig.h>
 
+#include "obdserial.h"
+#include "cardmanager.h"
+#include "lib/gpslib/gps.h"
+#include "lib/timer/Inc/Public/timer.h"
+
 
 typedef struct {
 	char header[5];
@@ -20,8 +25,9 @@ typedef struct {
 } command_t;
 
 
-int (*receive)(char**);
-int (*send)(char*);
+int (*cirecv)(char**);
+int (*cisend)(char*);
+int (*sendChar)(char);
 int halt = 0;
 
 
@@ -58,14 +64,14 @@ void* commandInterpreterThread(void* _param) {
 			char recv[1024];
 			memset(recv, 0, 1024);
 
-			result = (*receive)(&recv);
+			result = (*cirecv)(&recv);
 
 			if (strlen(recv) > 0) {
 
 				// Concatenate the last data with the previous part.
 				strcat(buf, recv);
 
-				Log_Debug("COMMANDINT: New data received (%s), now the buffer is \"%s\".\n", recv, buf);
+				// Log_Debug("COMMANDINT: New data received (%s), now the buffer is \"%s\".\n", recv, buf);
 			}
 
 			// Loop until command is complete.
@@ -77,7 +83,7 @@ void* commandInterpreterThread(void* _param) {
 
 		// TODO: Filter and process special commands.
 
-		Log_Debug("COMMANDINT: Processing command into a command_t.\n");
+		// Log_Debug("COMMANDINT: Processing command into a command_t.\n");
 
 		// TODO: strlen > 104
 
@@ -395,6 +401,256 @@ void* commandInterpreterThread(void* _param) {
 				}
 			}
 		}
+		// Is OBD module connected?
+		else if (!strcmp(currentCommand.header, "OBDC")) {
+			Log_Debug("COMMANDINT: Command decoded as OBD module connected request.\n");
+			answer = (char*)malloc(6 * sizeof(char));
+			memset(answer, 0, 6 * sizeof(char));
+			strcpy(answer, "OBDC");
+
+			// 1: Connected, 0: Disconnected
+			strcat(answer, OBD.connected ? "1" : "0");
+			answered = 1;
+		}
+		// Is car connected?
+		else if (!strcmp(currentCommand.header, "CARC")) {
+			Log_Debug("COMMANDINT: Command decoded as car connected request.\n");
+			answer = (char*)malloc(6 * sizeof(char));
+			memset(answer, 0, 6 * sizeof(char));
+			strcpy(answer, "CARC");
+
+			// 1: Connected, 0: Disconnected
+			strcat(answer, car.initialized ? "1" : "0");
+			answered = 1;
+		}
+		// Is SD card mounted?
+		else if (!strcmp(currentCommand.header, "SDMN")) {
+			Log_Debug("COMMANDINT: Command decoded as SD mounted request.\n");
+			answer = (char*)malloc(6 * sizeof(char));
+			memset(answer, 0, 6 * sizeof(char));
+			strcpy(answer, "SDMN");
+
+			// 1: Mounted, 0: Unmounted
+			strcat(answer, SDmounted ? "1" : "0");
+			answered = 1;
+		}
+		// SD card size
+		else if (!strcmp(currentCommand.header, "SDSZ")) {
+			Log_Debug("COMMANDINT: Command decoded as SD size request.\n");
+			answer = (char*)malloc(25 * sizeof(char));
+			memset(answer, 0, 25 * sizeof(char));
+
+
+			DWORD tot_sect;
+
+			/* Get total sectors and free sectors */
+			tot_sect = (SD.n_fatent - 2) * SD.csize;
+
+			/* Print the free space in KiB (assuming 512 bytes/sector) */
+			sprintf(answer, "SDSZ%lu", tot_sect / 2);
+
+			answered = 1;
+		}
+		// Get last file name
+		else if (!strcmp(currentCommand.header, "LFNM")) {
+			Log_Debug("COMMANDINT: Command decoded as current file name request.\n");
+
+			SDThreadLock = 1;
+
+			// Wait for confirmation
+			while (SDThreadLock != 2);
+
+			Log_Debug("COMMANDINT: SD thread locked.\n");
+
+			answer = (char*)malloc(25 * sizeof(char));
+			memset(answer, 0, 25 * sizeof(char));
+
+			char* name = malloc(16 * sizeof(char));
+			int i = 0;
+			FRESULT res;
+
+			// Search for files with incremental names.
+			do {
+				memset(name, 0, sizeof(name));
+				sprintf(name, "%d.log", i);
+				res = f_stat(name, NULL);
+				i++;
+				
+				// 1ms delay
+				struct timespec t;
+				t.tv_nsec = 1000000UL;
+				nanosleep(&t, NULL);
+
+			} while (res == FR_OK);
+
+			// O = OK
+			if (res == FR_NO_FILE && i > 1) {
+
+				sprintf(name, "%d.log", i - 2);
+				sprintf(answer, "LFNMO%s", name);
+			}
+			// Error (E)
+			else {
+				sprintf(answer, "LFNME");
+			}
+
+			free(name);
+
+			SDThreadLock = 0;
+
+			answered = 1;
+		}
+		// Get file size
+		else if (!strcmp(currentCommand.header, "GFSZ")) {
+			Log_Debug("COMMANDINT: Command decoded as file size request.\n");
+
+			SDThreadLock = 1;
+
+			// Wait for confirmation
+			while (SDThreadLock != 2);
+
+			Log_Debug("COMMANDINT: SD thread locked.\n");
+
+			answer = (char*)malloc(35 * sizeof(char));
+			memset(answer, 0, 35 * sizeof(char));
+
+			FILINFO fno;
+
+			// File exists, O = ok
+			if (f_stat(currentCommand.arguments, &fno) == FR_OK) {
+				sprintf(answer, "GFSZO%s#%d", fno.fname, (int)fno.fsize);
+			}
+			// File doesn't exist
+			else {
+				sprintf(answer, "GFSZE%s", currentCommand.arguments);
+			}
+
+			SDThreadLock = 0;
+
+			answered = 1;
+		}
+		// Get file content (SPECIAL ANSWER)
+		else if (!strcmp(currentCommand.header, "GFIL")) {
+			Log_Debug("COMMANDINT: Command decoded as file content request.\n");
+
+
+			// Save SDThreadLock before?
+			// Safe R/W
+			SDThreadLock = 1;
+
+			// Wait for confirmation
+			while (SDThreadLock != 2);
+
+			Log_Debug("COMMANDINT: SD thread locked.\n");
+
+			// Performance
+			stopGPSThread();
+			// stopOBDThread();
+
+			// Check whether we're trying to read the current file
+			char* name = malloc(16 * sizeof(char));
+			int i = 0;
+			FRESULT res;
+
+			bool isLastFile = false;
+
+			do {
+				memset(name, 0, sizeof(name));
+				sprintf(name, "%d.log", i);
+				res = f_stat(name, NULL);
+				i++;
+			} while (res == FR_OK);
+
+			sprintf(name, "%d.log", i - 2);
+			if (!strcmp(name, currentCommand.arguments))
+				isLastFile = true;
+
+			answer = (char*)malloc(35 * sizeof(char));
+			memset(answer, 0, 35 * sizeof(char));
+
+			FIL file;
+
+			const unsigned int smallBlockSize = 1024;
+			const unsigned int largeBlockSize = 8192;
+
+			// Not allowed to read last file, and in case of error break now.
+			if (isLastFile || res != FR_NO_FILE) {
+				sprintf(answer, "GFILE%s", currentCommand.arguments);
+			}
+			// Not last
+			else {
+
+				// Esists
+				if (f_open(&file, currentCommand.arguments, FA_READ) == FR_OK) {
+
+
+					// Start reading
+					unsigned long long transferstart = nanos();
+
+					// Send header (S = start)
+					sprintf(answer, "GFILS%s", currentCommand.arguments);
+					(*cisend)(answer);
+
+					// Start sending data
+					int readBytes;
+					int totalReadBytes;
+					char* buf = (char*)malloc((largeBlockSize + 1) * sizeof(char));
+
+					do {
+
+						totalReadBytes = 0;
+
+						// Clean temp buffer
+						memset(buf, 0, (largeBlockSize + 1) * sizeof(char));
+
+						// Read large block
+						do {
+							int bytesToRead = ((largeBlockSize - totalReadBytes) < smallBlockSize) ? (largeBlockSize - totalReadBytes) : smallBlockSize;
+							f_read(&file, buf + totalReadBytes, bytesToRead, &readBytes);
+							totalReadBytes += readBytes;
+
+							// Read until big chunk is ready or EOF
+						} while (totalReadBytes < largeBlockSize && readBytes == smallBlockSize);
+
+
+						// Send buffer
+						for (int i = 0; i < totalReadBytes; i++) {
+
+							char c = buf[i];
+
+							// Loop until buffer has free space
+							while ((*sendChar)(c) == -1) { ; }
+						}
+
+						// Loop until EOF
+					} while (totalReadBytes == largeBlockSize);
+
+					free(buf);
+					f_close(&file);
+
+					unsigned long long transferend = nanos();
+
+					unsigned long long elapsed = transferend - transferstart;
+
+					// Send footer (O = ok)
+					memset(answer, 0, 35 * sizeof(char));
+					sprintf(answer, "GFILO%s", currentCommand.arguments);
+
+				}
+				// File doesn't exist
+				else {
+					sprintf(answer, "GFILE%s", currentCommand.arguments);
+				}
+			}
+
+			SDThreadLock = 0;
+
+			startGPSThread();
+			// startOBDThread();
+
+			answered = 1;
+		}
+
 
 
 		// Answer with the requested data.
@@ -403,7 +659,7 @@ void* commandInterpreterThread(void* _param) {
 		// This filters errors when receiving invalid commands.
 		if (answered) {
 			Log_Debug("COMMANDINT: Sending answer. Content is \"%s\".\n", answer);
-			(*send)(answer);
+			(*cisend)(answer);
 			free(answer);
 		}
 		else {
@@ -426,7 +682,7 @@ void* commandInterpreterThread(void* _param) {
 
 pthread_t ciThread;
 
-int startCommandInterpreter(int (*_receive)(char**), int (*_send)(char*)) {
+int startCommandInterpreter(int (*_receive)(char**), int (*_send)(char*), int (*_sendChar)(char)) {
 
 	// Allows the thread to continue.
 	halt = 0;
@@ -434,11 +690,13 @@ int startCommandInterpreter(int (*_receive)(char**), int (*_send)(char*)) {
 	Log_Debug("COMMANDINT: Starting command interpreter thread.\n");
 
 	// Associate read and write functions (generic in order to allow different connections, not only TCP).
-	receive = _receive;
-	send = _send;
+	cirecv = _receive;
+	cisend = _send;
+	sendChar = _sendChar;
 
 	// Start the thread.
 	pthread_create(&ciThread, NULL, commandInterpreterThread, NULL);
+	// TODO: pthread_setschedparam(ciThread, ..., ...);
 }
 
 
@@ -449,7 +707,7 @@ int stopCommandInterpreter()
 	// Exits the main loop.
 	halt = 1;
 
-	// 2 ms
+	// 2 ms wait
 	struct timespec ts = { 0, 2000000 };
 	nanosleep(&ts, NULL);
 

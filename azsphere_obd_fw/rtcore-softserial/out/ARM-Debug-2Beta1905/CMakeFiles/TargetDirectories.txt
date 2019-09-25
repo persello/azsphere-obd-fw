@@ -1,0 +1,4 @@
+C:/Users/ricca/Projects/Azure Sphere/azsphere_obd_fw/azsphere_obd_fw/rtcore-softserial/out/ARM-Debug-2Beta1905/CMakeFiles/rtcore-softserial.dir
+C:/Users/ricca/Projects/Azure Sphere/azsphere_obd_fw/azsphere_obd_fw/rtcore-softserial/out/ARM-Debug-2Beta1905/CMakeFiles/MakeImage.dir
+C:/Users/ricca/Projects/Azure Sphere/azsphere_obd_fw/azsphere_obd_fw/rtcore-softserial/out/ARM-Debug-2Beta1905/CMakeFiles/edit_cache.dir
+C:/Users/ricca/Projects/Azure Sphere/azsphere_obd_fw/azsphere_obd_fw/rtcore-softserial/out/ARM-Debug-2Beta1905/CMakeFiles/rebuild_cache.dir

@@ -37,18 +37,18 @@
 /*-------------------------------------------------------------------------*/
 
 
-#define DO_INIT()	SPI_MISO_Init()				/* Initialize port for MMC DO as input */
-#define DO			SPI_MISO_Get()	/* Test for MMC DO ('H':true, 'L':false) */
-
-#define DI_INIT()	SPI_MOSI_Init()	/* Initialize port for MMC DI as output */
-#define DI_H()		SPI_MOSI_Set(1)	/* Set MMC DI "high" */
-#define DI_L()		SPI_MOSI_Set(0)	/* Set MMC DI "low" */
-
-#define CK_INIT()	SPI_SCK_Init()	/* Initialize port for MMC SCLK as output */
-#define CK_H()		SPI_SCK_Set(1)	/* Set MMC SCLK "high" */
-#define	CK_L()		SPI_SCK_Set(0)	/* Set MMC SCLK "low" */
-
-#define CS_INIT()	SPI_CS_Init()	/* Initialize port for MMC CS as output */
+//#define DO_INIT()	SPI_MISO_Init()				/* Initialize port for MMC DO as input */
+//#define DO			SPI_MISO_Get()	/* Test for MMC DO ('H':true, 'L':false) */
+//
+//#define DI_INIT()	SPI_MOSI_Init()	/* Initialize port for MMC DI as output */
+//#define DI_H()		SPI_MOSI_Set(1)	/* Set MMC DI "high" */
+//#define DI_L()		SPI_MOSI_Set(0)	/* Set MMC DI "low" */
+//
+//#define CK_INIT()	SPI_SCK_Init()	/* Initialize port for MMC SCLK as output */
+//#define CK_H()		SPI_SCK_Set(1)	/* Set MMC SCLK "high" */
+//#define	CK_L()		SPI_SCK_Set(0)	/* Set MMC SCLK "low" */
+//
+//#define CS_INIT()	SPI_CS_Init()	/* Initialize port for MMC CS as output */
 #define	CS_H()		SPI_CS_Set(1)	/* Set MMC CS "high" */
 #define CS_L()		SPI_CS_Set(0)	/* Set MMC CS "low" */
 
@@ -103,7 +103,7 @@ DSTATUS Stat = STA_NOINIT;	/* Disk status */
 static
 BYTE CardType;			/* b0:MMC, b1:SDv1, b2:SDv2, b3:Block addressing */
 
-
+// TODO: Edit these two functions!
 
 /*-----------------------------------------------------------------------*/
 /* Transmit bytes to the card (bitbanging)                               */
@@ -115,28 +115,30 @@ void xmit_mmc(
 	UINT bc				/* Number of bytes to send */
 )
 {
-	BYTE d;
+	//BYTE d;
 
 
-	do {
-		d = *buff++;	/* Get a byte to be sent */
-		if (d & 0x80) DI_H(); else DI_L();	/* bit7 */
-		CK_H(); CK_L();
-		if (d & 0x40) DI_H(); else DI_L();	/* bit6 */
-		CK_H(); CK_L();
-		if (d & 0x20) DI_H(); else DI_L();	/* bit5 */
-		CK_H(); CK_L();
-		if (d & 0x10) DI_H(); else DI_L();	/* bit4 */
-		CK_H(); CK_L();
-		if (d & 0x08) DI_H(); else DI_L();	/* bit3 */
-		CK_H(); CK_L();
-		if (d & 0x04) DI_H(); else DI_L();	/* bit2 */
-		CK_H(); CK_L();
-		if (d & 0x02) DI_H(); else DI_L();	/* bit1 */
-		CK_H(); CK_L();
-		if (d & 0x01) DI_H(); else DI_L();	/* bit0 */
-		CK_H(); CK_L();
-	} while (--bc);
+	//do {
+	//	d = *buff++;	/* Get a byte to be sent */
+	//	if (d & 0x80) DI_H(); else DI_L();	/* bit7 */
+	//	CK_H(); CK_L();
+	//	if (d & 0x40) DI_H(); else DI_L();	/* bit6 */
+	//	CK_H(); CK_L();
+	//	if (d & 0x20) DI_H(); else DI_L();	/* bit5 */
+	//	CK_H(); CK_L();
+	//	if (d & 0x10) DI_H(); else DI_L();	/* bit4 */
+	//	CK_H(); CK_L();
+	//	if (d & 0x08) DI_H(); else DI_L();	/* bit3 */
+	//	CK_H(); CK_L();
+	//	if (d & 0x04) DI_H(); else DI_L();	/* bit2 */
+	//	CK_H(); CK_L();
+	//	if (d & 0x02) DI_H(); else DI_L();	/* bit1 */
+	//	CK_H(); CK_L();
+	//	if (d & 0x01) DI_H(); else DI_L();	/* bit0 */
+	//	CK_H(); CK_L();
+	//} while (--bc);
+
+	SPI_Send(buff, bc);
 }
 
 
@@ -151,30 +153,33 @@ void rcvr_mmc(
 	UINT bc		/* Number of bytes to receive */
 )
 {
-	BYTE r;
+	//BYTE r;
 
 
-	DI_H();	/* Send 0xFF */
+	//DI_H();	/* Send 0xFF */
 
-	do {
-		r = 0;	 if (DO) r++;	/* bit7 */
-		CK_H(); CK_L();
-		r <<= 1; if (DO) r++;	/* bit6 */
-		CK_H(); CK_L();
-		r <<= 1; if (DO) r++;	/* bit5 */
-		CK_H(); CK_L();
-		r <<= 1; if (DO) r++;	/* bit4 */
-		CK_H(); CK_L();
-		r <<= 1; if (DO) r++;	/* bit3 */
-		CK_H(); CK_L();
-		r <<= 1; if (DO) r++;	/* bit2 */
-		CK_H(); CK_L();
-		r <<= 1; if (DO) r++;	/* bit1 */
-		CK_H(); CK_L();
-		r <<= 1; if (DO) r++;	/* bit0 */
-		CK_H(); CK_L();
-		*buff++ = r;			/* Store a received byte */
-	} while (--bc);
+	//do {
+	//	r = 0;	 if (DO) r++;	/* bit7 */
+	//	CK_H(); CK_L();
+	//	r <<= 1; if (DO) r++;	/* bit6 */
+	//	CK_H(); CK_L();
+	//	r <<= 1; if (DO) r++;	/* bit5 */
+	//	CK_H(); CK_L();
+	//	r <<= 1; if (DO) r++;	/* bit4 */
+	//	CK_H(); CK_L();
+	//	r <<= 1; if (DO) r++;	/* bit3 */
+	//	CK_H(); CK_L();
+	//	r <<= 1; if (DO) r++;	/* bit2 */
+	//	CK_H(); CK_L();
+	//	r <<= 1; if (DO) r++;	/* bit1 */
+	//	CK_H(); CK_L();
+	//	r <<= 1; if (DO) r++;	/* bit0 */
+	//	CK_H(); CK_L();
+	//	*buff++ = r;			/* Store a received byte */
+	//} while (--bc);
+
+	SPI_Receive(&buff, bc);
+
 }
 
 
@@ -197,7 +202,10 @@ int wait_ready(void)	/* 1:OK, 0:Timeout */
 		dly_us(100);
 	}
 
-	return tmr ? 1 : 0;
+	// Some strange cards won't pass this routine
+	return 1;
+
+	//return tmr ? 1 : 0;
 }
 
 
@@ -370,6 +378,8 @@ DSTATUS disk_status(
 /* Initialize Disk Drive                                                 */
 /*-----------------------------------------------------------------------*/
 
+// TODO: Low speed at the beginning, fast when initialized correctly
+
 DSTATUS disk_initialize(
 	BYTE drv		/* Physical drive nmuber (0) */
 )
@@ -382,10 +392,17 @@ DSTATUS disk_initialize(
 	if (drv) return RES_NOTRDY;
 
 	dly_us(10000);			/* 10ms */
-	CS_INIT(); CS_H();		/* Initialize port pin tied to CS */
-	CK_INIT(); CK_L();		/* Initialize port pin tied to SCLK */
-	DI_INIT();				/* Initialize port pin tied to DI */
-	DO_INIT();				/* Initialize port pin tied to DO */
+
+	// Hardware SPI
+	SPI_Init();
+	CS_H();
+
+	SPI_SCK_Slow();
+
+	//CS_INIT(); CS_H();		/* Initialize port pin tied to CS */
+	//CK_INIT(); CK_L();		/* Initialize port pin tied to SCLK */
+	//DI_INIT();				/* Initialize port pin tied to DI */
+	//DO_INIT();				/* Initialize port pin tied to DO */
 
 	for (n = 10; n; n--) rcvr_mmc(buf, 1);	/* Apply 80 dummy clocks and the card gets ready to receive command */
 
@@ -424,6 +441,11 @@ DSTATUS disk_initialize(
 	Stat = s;
 
 	deselect();
+
+	// Successful: Raise speed
+	if (!s) {
+		SPI_SCK_Fast();
+	}
 
 	return s;
 }
