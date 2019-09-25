@@ -1,4 +1,6 @@
-﻿#include <errno.h>
+﻿#define WIFICONFIG_STRUCTS_VERSION 1
+
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -8,6 +10,7 @@
 
 #include <applibs/log.h>
 #include <applibs/gpio.h>
+#include <applibs/wificonfig.h>
 
 
 #include "appTCP.h"
@@ -16,10 +19,10 @@
 #include "config.h"
 #include "obdserial.h"
 #include "lib/gpslib/gps.h"
-
-
+#include "lib/timer/Inc/Public/timer.h"
 
 static volatile sig_atomic_t terminationRequested = 0;
+int TCPTimerStarted = 0;
 
 void TerminationHandler(void) {
 	Log_Debug("MAIN: SIGTERM caught! Halting all the threads before exiting!\n");
@@ -36,6 +39,9 @@ int main(void)
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = TerminationHandler;
 	sigaction(SIGTERM, &action, NULL);
+
+	// Ignore SIGPIPEs
+	// signal(SIGPIPE, SIG_IGN);
 
 	Log_Debug("MAIN: SIGTERM handler registered, initializing SD card.\n");
 
@@ -102,9 +108,26 @@ int main(void)
 		}
 		btnbprev = btnbres;*/
 
-		if (TCPThreadStatus == STATUS_STOPPED) {
-			Log_Debug("MAIN: TCP threads are stopped. Restarting...\n");
-			startTCPThreads();
+
+		WifiConfig_ConnectedNetwork net;
+		int networkConnected = (WifiConfig_GetCurrentNetwork(&net) != -1);
+
+		// Restart the TCP thread with a delay if it is stopped while a WiFi network is connected
+		if (TCPThreadStatus == STATUS_STOPPED && networkConnected) {
+			if (!TCPTimerStarted) {
+				Log_Debug("MAIN: TCP threads are stopped while network is connected. Restarting in %d seconds...\n", TIMER_TCP_RESTART_DURATION / 1000);
+				Timer_On(TIMER_TCP_RESTART_DURATION, TIMER_TCP_RESTART);
+				TCPTimerStarted = 1;
+			}
+
+			if (!Timer_Status(TIMER_TCP_RESTART)) {
+				startTCPThreads();
+				TCPTimerStarted = 0;
+			}
+		}
+		// Stop the TCP thread if it is running without a connected WiFi network
+		else if ((TCPThreadStatus == STATUS_RUNNING || TCPThreadStatus == STATUS_STARTING) && !networkConnected) {
+			stopTCPThreads();
 		}
 	}
 

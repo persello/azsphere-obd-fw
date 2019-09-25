@@ -1,10 +1,12 @@
 #define _GNU_SOURCE
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <ifaddrs.h>
 #include <errno.h>
 #include <malloc.h>
+#include <poll.h>
 #include <pthread.h>
 
 #include <sys/ioctl.h>
@@ -17,6 +19,24 @@
 #include "appTCP.h"
 #include "lib/circularbuffer/buffer.h"
 #include "config.h"
+
+
+/////////////////////////////////////////////
+
+//void* my_malloc(size_t size, const char* file, int line, const char* func)
+//{
+//
+//	void* p = malloc(size);
+//	Log_Debug("Allocated = %s, %i, %s, %p[%li]\n", file, line, func, p, size);
+//
+//	/*Link List functionality goes in here*/
+//
+//	return p;
+//}
+//
+//#define malloc(X) my_malloc( X, __FILE__, __LINE__, __FUNCTION__ )
+
+////////////////////////////////////////////////
 
 
 
@@ -36,13 +56,15 @@ char* getWlanAddr(char* _interfaceName) {
 	Log_Debug("TCPIO: Getting IP address.\n");
 
 	struct ifaddrs* addrs;
-	getifaddrs(&addrs);
+	int ifresult = getifaddrs(&addrs);
 	struct ifaddrs* tmp = addrs;
 
 	Log_Debug("TCPIO: The selected interface is %s.\n", INTERFACE_NAME);
 
-	while (tmp)
-	{		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+	// Check all the addresses, do nothing if getifaddrs failed.
+	while (tmp && ifresult != -1)
+	{
+		if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
 		{
 			struct sockaddr_in* pAddr = (struct sockaddr_in*)tmp->ifa_addr;
 			Log_Debug("TCPIO: IP address of interface %s is: %s.\n", tmp->ifa_name, inet_ntoa(pAddr->sin_addr));
@@ -62,7 +84,7 @@ char* getWlanAddr(char* _interfaceName) {
 int send_all(int _socket, char* _buffer)
 {
 	size_t length = strlen(_buffer);
-	int i = write(_socket, _buffer, length);
+	int i = send(_socket, _buffer, length, MSG_NOSIGNAL);
 	return i;
 }
 
@@ -103,7 +125,20 @@ int initSocket(void) {
 		Log_Debug("TCPIO: TCP Server started at address %s on port %d.\n", inet_ntoa(ServerIp.sin_addr), ntohs(ServerIp.sin_port));
 	}
 
-	// When a connection happens (blocking), we populate the client_conn file descriptor
+	struct pollfd fds[1];
+
+	fds[0].fd = sock;
+	fds[0].events = POLLIN;
+
+	// Expires in 50 milliseconds
+	while (poll(fds, 1, 50) == 0) {
+		// If a cancel request is triggered while waiting for poll, return
+		if (TCPThreadStatus == STATUS_STOPPING) {
+			return -1;
+		}
+	}
+
+	// After a connection happens (blocking), we populate the client_conn file descriptor
 	client_conn = accept(sock, (struct sockaddr*)NULL, NULL);
 	Log_Debug("TCPIO: A request received from client.\n");
 	Log_Debug("TCPIO: Answering with the initialization data: %s.\n", init_data);
