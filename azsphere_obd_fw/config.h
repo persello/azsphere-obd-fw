@@ -20,6 +20,7 @@
 
 #define OBD_SERIAL		MT3620_UART_ISU0
 #define OBD_INITIAL_BR	9600
+#define OBD_MAX_ERROR	10
 
 // Bit-banged SPI (until simultaneous R/W is supported by the native API)
 
@@ -71,3 +72,6 @@
 
 #define TIMER_TCP_RESTART			1
 #define TIMER_TCP_RESTART_DURATION	3000
+
+#define TIMER_BATTERY				2
+#define TIMER_BATTERY_DURATION		5000
