@@ -21,6 +21,8 @@ buffer_t TXBuffer;
 pthread_t OBDThread;
 
 int OBDThreadTerminationRequest;
+int errorCount = 0;
+int batteryTimerActive = 0;
 
 void OBDModule_Init(OBDModule* _module) {
 	_module->baudRate = -1;
@@ -262,7 +264,7 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 	if (!RXBuffer.size)
 		initCircBuffer(&RXBuffer, 512);
 
-	if(!TXBuffer.size)
+	if (!TXBuffer.size)
 		initCircBuffer(&TXBuffer, 512);
 
 	// Reset the device
@@ -318,12 +320,64 @@ int initializeVehicleProperties(VehicleProperties* _car) {
 
 void* OBDThreadMain(void* _param) {
 	while (!OBDThreadTerminationRequest) {
+
+		// Reset module after OBD_MAX_ERROR errors
+		if (errorCount >= OBD_MAX_ERROR) {
+
+			Log_Debug("OBDSERIAL: %d OBD errors happened, resetting module.\n", errorCount);
+
+			car.initialized = 0;
+
+			// Protocol close
+			sendATCommand("PC");
+
+			// Reinitialize module
+			OBD.connected = 0;
+
+			// Logs the deinitialization
+			logToSD("CARECUINIT\t0");
+
+			errorCount = 0;
+		}
+
 		if (!OBD.connected && !OBDThreadLock) {
 
 			// Disconnected
 			initOBDComm(OBD_SERIAL, &OBD, OBD_INITIAL_BR);
 		}
 		else if (!OBDThreadLock) {
+
+			if (!Timer_Status(TIMER_BATTERY) && batteryTimerActive) {
+
+				// Poll battery voltage even when car is disconnected, every 5 seconds.
+				sendATCommand("RV");
+				char* voltagestr = malloc(20);
+				getLastReceivedMessage(&voltagestr);
+
+				// We received back voltage information
+
+				// Convert from string
+				float voltage = strtof(voltagestr, NULL);
+				car.lastBatteryVoltage = (double)voltage;
+				Log_Debug("OBDSERIAL: Battery voltage is %f volts.\n", voltage);
+
+				char* result = malloc(30);
+
+				// Log to SD card if car is initialized
+				if (car.initialized) {
+					sprintf(result, "BATVOLTAGE\t%f", voltage);
+					logToSD(result);
+				}
+
+				free(result);
+				free(voltagestr);
+				Timer_On(TIMER_BATTERY_DURATION, TIMER_BATTERY);
+			}
+			else if (!batteryTimerActive) {
+				Timer_On(TIMER_BATTERY_DURATION, TIMER_BATTERY);
+				batteryTimerActive = 1;
+			}
+
 
 			// Car not initialized
 			if (!car.initialized) {
@@ -345,7 +399,7 @@ void* OBDThreadMain(void* _param) {
 				else {
 
 					// Some cars (VW Golf Mk. 3/4) won't answer to the first message if continuously pinged.
-					sleep(3);
+					sleep(1);
 
 					char* received;
 					getLastReceivedMessage(&received);
@@ -387,6 +441,8 @@ void* OBDThreadMain(void* _param) {
 							// Logs the initialization
 							logToSD("CARECUINIT\t1");
 
+							errorCount = 0;
+
 							Log_Debug("OBDSERIAL: Car initialized.\n");
 
 						}
@@ -394,6 +450,7 @@ void* OBDThreadMain(void* _param) {
 						else {
 							// Let's reset the module
 							// OBD.connected = 0;
+							errorCount++;
 						}
 					}
 					// Wrong length
@@ -401,6 +458,7 @@ void* OBDThreadMain(void* _param) {
 
 						// Let's reset the module
 						// OBD.connected = 0;
+						errorCount++;
 					}
 
 					free(received);
@@ -409,37 +467,6 @@ void* OBDThreadMain(void* _param) {
 				// ECU initialized, poll the parameters
 			}
 			else {
-
-				// Poll battery voltage
-				sendATCommand("RV");
-				char* voltagestr = malloc(20);
-				getLastReceivedMessage(&voltagestr);
-
-				// We received back voltage information
-
-				// TODO: Fix this. ATRV does not echo ATRV back.
-				if (/*strncmp(&voltagestr, "ATRV\r", 5) == 0*/ 1) {
-
-					// Convert from string
-
-					// TODO: This should be set to voltagestr + 5 when you receive ATRV\r before the voltage reading
-					float voltage = strtof(voltagestr, NULL);
-					Log_Debug("OBDSERIAL: Battery voltage is %f volts.\n", voltage);
-
-					char* result = malloc(30);
-
-					// Log to SD card
-					sprintf(result, "BATVOLTAGE\t%f", voltage);
-					logToSD(result);
-
-					free(result);
-				}
-				else {
-					Log_Debug("OBDSERIAL: Could not get battery voltage information. Answer was \"%s\".\n", voltagestr);
-				}
-
-				free(voltagestr);
-
 
 				// Poll all the interesting parameters
 				for (int i = 0; i < PARAMETER_POLL_COUNT; i++) {
@@ -578,33 +605,17 @@ void* OBDThreadMain(void* _param) {
 
 									free(result);
 
+									// Successful, reset error count
+									errorCount = 0;
 								}
 								// Incorrect header: need to reinitialize car
 								else {
-									car.initialized = 0;
-
-									// Protocol close
-									sendATCommand("PC");
-
-									// Reinitialize module
-									OBD.connected = 0;
-
-									// Logs the deinitialization
-									logToSD("CARECUINIT\t1");
+									errorCount++;
 								}
 							}
 							// Incorrect length: need to reinitialize car (module resets when car initialization fails)
 							else {
-								car.initialized = 0;
-
-								// Protocol close
-								sendATCommand("PC");
-
-								// Reinitialize module
-								OBD.connected = 0;
-
-								// Logs the deinitialization
-								logToSD("CARECUINIT\t1");
+								errorCount++;
 							}
 						}
 

@@ -37,4 +37,5 @@ typedef struct {
 	int lastEngineCoolantTemp;				// Done
 	double lastAirFlow;						// Done
 	double lastThrottlePosition;			// Done
+	double lastBatteryVoltage;				// Done
 } VehicleProperties;
