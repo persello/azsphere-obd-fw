@@ -4,27 +4,28 @@
 
 #include <soc/mt3620_uarts.h>
 #include <soc/mt3620_spis.h>
+#include <hw/avnet_mt3620_sk.h>
 
-#define PIN_LED_APP		4
-#define PIN_LED_WLAN	5
+#define PIN_LED_APP		AVNET_MT3620_SK_APP_STATUS_LED_YELLOW
+#define PIN_LED_WLAN	AVNET_MT3620_SK_WLAN_STATUS_LED_YELLOW
 
-#define PIN_LED_RED		8
-#define PIN_LED_GREEN	9
-#define PIN_LED_BLUE	10
+#define PIN_LED_RED		AVNET_MT3620_SK_USER_LED_RED
+#define PIN_LED_GREEN	AVNET_MT3620_SK_USER_LED_GREEN
+#define PIN_LED_BLUE	AVNET_MT3620_SK_USER_LED_BLUE
 
-#define PIN_BTN_A		12
-#define PIN_BTN_B		13
+#define PIN_BTN_A		AVNET_MT3620_SK_USER_BUTTON_A
+#define PIN_BTN_B		AVNET_MT3620_SK_USER_BUTTON_B
 
 #define INTERFACE_NAME	"wlan0"
 #define PORT_NUMBER		15500
 
-#define OBD_SERIAL		MT3620_UART_ISU0
+#define OBD_SERIAL		AVNET_MT3620_SK_ISU0_UART
 #define OBD_INITIAL_BR	9600
 #define OBD_MAX_ERROR	10
 
 // Bit-banged SPI (until simultaneous R/W is supported by the native API)
 
-#define SD_CARD_SPI			MT3620_SPI_ISU1
+#define SD_CARD_SPI			AVNET_MT3620_SK_ISU_SPI
 #define SD_CARD_CS_PIN		17								// Use 16 for slot 1.
 #define SD_CARD_MOSI_AUX	43								// Use 42 for slot 1.
 

@@ -31,6 +31,9 @@
     <ClCompile Include="cardmanager.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="statusleds.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h">
@@ -55,6 +58,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cardmanager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="statusleds.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
