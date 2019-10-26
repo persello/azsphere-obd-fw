@@ -86,3 +86,18 @@ This table refers to the second slot.
 |         GND           |                   |    Both    |          GND          |             |
 
 \* The CS pin of the microSD card reader is left disconnected from the ISU's CS pin because it needs to be handled in a particular way. microSD cards sometimes need to receive data with CS high and since the internal APIs don't allow this, it is preferred to control it manually (as of now, even the SPI bus is also bit-banged, but I plan to switch to a faster implementation in the future).
+
+## Native SPI for SD card
+After working with the bit-banged SPI mode, I built an hardware workaround in order to use the native (and fast) SPI library.
+
+All I needed was an independent control of the MOSI pin (not currently allowed by the library), so I thought to build an OR gate with two diodes and a pull-down resistor.
+
+This because we need to keep the MOSI line high while reading data from the card, otherwise most of the cards will fail to answer back.
+
+First of all, connect the MOSI pin of the card reader to ground through a 47kOhm resistor. Then insert a diode (e.g. 1N4007) between the MOSI pin of the card reader and the MOSI pin of the mikroBUS™ slot (GPIO32). The cathode (the part with a white stripe) must be connected to the card reader.
+
+Another diode should be put between the MOSI pin and a general purpose output of the mikroBUS™ slot (same as before, with the cathode facing the card reader). I chose to use the GPS's bit-banged UART output, since we never need to send data to the GPS unit, so I modified the connection in order to use it for the SPI's auxiliary MOSI control output.
+
+The CS pin of the board is still disconnected, because even there we use a general-purpose output in order to have better control. The program manages the chip selector and the auxiliary MOSI output so that it gets pulled up whenever a read sequence starts, and gets "freed" back to normal control once it stops.
+
+The highest reliable speed is around 20MHz, everything above it is not very reliable, by looking at the signal with an oscilloscope, it gets seriously attenuated (remember, we are on a perfboard).

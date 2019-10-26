@@ -36,7 +36,7 @@
 // #define GPS_SOFT_TX			43								// Slot 2 AN pin, use 42 for slot 1
 // #define GPS_SOFT_RX			1								// Slot 2 PWM pin, use 0 for slot 1
 
-#define FW_VER			"0.2.2"
+#define FW_VER			"0.3.0"
 
 // 0.1.0: Base alpha FW.
 // 0.1.1: SD card mounted, basic SD I/O.
@@ -48,7 +48,7 @@
 // 0.2.1: GPS logger. Needs testing on board.
 // 0.2.2: GPS logging works, OBD needs testing again. File I/O over TCP ready for test with app.
 
-// TARGET: 0.3: Target release, fast SPI interfacing works, GPS and OBD logging is reliable and file transmission works.
+// 0.3: Target release, fast SPI interfacing works, GPS and OBD logging is reliable and file transmission works.
 // TARGET: 0.4: Real time transmission to app.
 
 // In order of priority:
@@ -75,3 +75,12 @@
 
 #define TIMER_BATTERY				2
 #define TIMER_BATTERY_DURATION		5000
+
+#define TIMER_TCP_TIMEOUT			3
+#define TIMER_TCP_TIMEOUT_DURATION	20000
+
+#define TIMER_CONN_CHECK			4
+#define TIMER_CONN_CHECK_DURATION	1000
+
+#define TIMER_OBD_RECONN			5
+#define TIMER_OBD_RECONN_DURATION	2000

@@ -15,12 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="timer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Inc\Public\timer.h">
+    <ClInclude Include="Inc\Public\memorylogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

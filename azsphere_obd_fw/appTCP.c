@@ -5,7 +5,7 @@
 #include <string.h>
 #include <ifaddrs.h>
 #include <errno.h>
-#include <malloc.h>
+// #include <malloc.h>
 #include <poll.h>
 #include <pthread.h>
 
@@ -18,27 +18,8 @@
 
 #include "appTCP.h"
 #include "lib/circularbuffer/buffer.h"
+#include "lib/timer/Inc/Public/timer.h"
 #include "config.h"
-
-
-/////////////////////////////////////////////
-
-//void* my_malloc(size_t size, const char* file, int line, const char* func)
-//{
-//
-//	void* p = malloc(size);
-//	Log_Debug("Allocated = %s, %i, %s, %p[%li]\n", file, line, func, p, size);
-//
-//	/*Link List functionality goes in here*/
-//
-//	return p;
-//}
-//
-//#define malloc(X) my_malloc( X, __FILE__, __LINE__, __FUNCTION__ )
-
-////////////////////////////////////////////////
-
-
 
 char* wlan_addr;							// IP address of the selected interface
 struct sockaddr_in ServerIp;				// The address struct
@@ -94,6 +75,10 @@ int initSocket(void) {
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);		// Socket creation (AF_INET -> IPv4, SOCK_STREAM -> TCP)
 
+	int tr = 1;
+	// Reuse address (because it might still be used by the previous instance if the app crashed).
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &tr, sizeof(int));
+
 	wlan_addr = getWlanAddr(INTERFACE_NAME);	// Getting wlan0's IP address
 
 	// When interface is not available, fail.
@@ -107,9 +92,6 @@ int initSocket(void) {
 	ServerIp.sin_port = htons(PORT_NUMBER);				// Port defined in TCPIO.h
 	ServerIp.sin_addr.s_addr = inet_addr(wlan_addr);	// Address is set to wlan0's address
 
-	// Reuse address (because it might still be used by the previous instance if the app crashed).
-	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 1, sizeof(int));
-
 	// Try to bind sock and ServerIp
 	if (bind(sock, (struct sockaddr*) & ServerIp, sizeof(ServerIp)) == -1) {
 		Log_Debug("TCPIO: Socket binding failed. ERROR: \"%s\".\n", strerror(errno));
@@ -118,7 +100,7 @@ int initSocket(void) {
 
 	// Socket is set to passive mode (listening)
 	if (listen(sock, 20) == -1) {
-		Log_Debug("TCPIO: Error. Server not started.\n\tERROR: \"%s\".\n", strerror(errno));
+		Log_Debug("TCPIO: Error. Server not started. ERROR: \"%s\".\n", strerror(errno));
 		return -1;
 	}
 	else {
@@ -140,6 +122,12 @@ int initSocket(void) {
 
 	// After a connection happens (blocking), we populate the client_conn file descriptor
 	client_conn = accept(sock, (struct sockaddr*)NULL, NULL);
+
+	if (client_conn == -1) {
+		Log_Debug("TCPIO: Error while accepting connection. ERROR: %s.\n", strerror(errno));
+		return -1;
+	}
+
 	Log_Debug("TCPIO: A request received from client.\n");
 	Log_Debug("TCPIO: Answering with the initialization data: %s.\n", init_data);
 
@@ -240,6 +228,9 @@ void* TCPSendThread(void* _param) {
 		// Skip if empty
 		if (outputBuffer.status != BUFFER_EMPTY) {
 
+			// Reset timeout
+			Timer_On(TIMER_TCP_TIMEOUT_DURATION, TIMER_TCP_TIMEOUT);
+
 			// Buffer for calculating minimum size.
 			char buf[outputBuffer.size];
 			int i = 0;
@@ -259,9 +250,15 @@ void* TCPSendThread(void* _param) {
 		}
 	}
 
-	shutdown(sock, 2);
-	close(client_conn);
-	close(sock);
+	if (client_conn) {
+		close(client_conn);
+		client_conn = 0;
+	}
+	if (sock) {
+		shutdown(sock, SHUT_RDWR);
+		close(sock);
+		sock = 0;
+	}
 	pthread_cancel(receiveThread);
 	sleep(1);
 	Log_Debug("TCPIO: TCP send thread closed. Last error was \"%s\".\n", strerror(errno));
@@ -312,9 +309,15 @@ void* TCPReceiveThread(void* _param) {
 		}
 	}
 
-	shutdown(sock, 2);
-	close(client_conn);
-	close(sock);
+	if (client_conn) {
+		close(client_conn);
+		client_conn = 0;
+	}
+	if (sock) {
+		shutdown(sock, SHUT_RDWR);
+		close(sock);
+		sock = 0;
+	}
 	Log_Debug("TCPIO: TCP receive thread closed. Last error was \"%s\".\n", strerror(errno));
 	TCPThreadStatus = STATUS_STOPPED;
 	return NULL;

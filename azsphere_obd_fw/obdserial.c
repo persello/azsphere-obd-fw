@@ -15,6 +15,9 @@
 
 #include <applibs/log.h>
 
+// #include "lib/memorylogger/Inc/Public/memorylogger.h"
+
+
 buffer_t RXBuffer;
 buffer_t TXBuffer;
 
@@ -142,7 +145,6 @@ int getLastReceivedMessage(char** _output) {
 
 		// Copy the result to the final buffer
 		strncpy(*_output, buf, length - 1);
-
 	}
 
 	// Big temporary buffer not needed anymore
@@ -282,6 +284,11 @@ int initOBDComm(UART_Id _id, OBDModule* _module, long _initialBaudRate) {
 		return -1;
 	}
 
+	// Do not check keyword match
+	if (sendATCommand("KW0") == -1) {
+		return -1;
+	}
+
 	// TODO: Raise speed?
 	// sendSTCommand("BR2000000"); // Maximum MT3620 speed
 
@@ -351,7 +358,7 @@ void* OBDThreadMain(void* _param) {
 
 				// Poll battery voltage even when car is disconnected, every 5 seconds.
 				sendATCommand("RV");
-				char* voltagestr = malloc(20);
+				char* voltagestr;
 				getLastReceivedMessage(&voltagestr);
 
 				// We received back voltage information
@@ -380,9 +387,12 @@ void* OBDThreadMain(void* _param) {
 
 
 			// Car not initialized
-			if (!car.initialized) {
+			if (!car.initialized && !Timer_Status(TIMER_OBD_RECONN)) {
+
+				Timer_On(TIMER_OBD_RECONN_DURATION, TIMER_OBD_RECONN);
 
 				// Initialize the ECU and get basic info
+				Log_Debug("OBDSERIAL: Trying to reconnect to ECU.\n");
 
 				// Initialize the struct
 				initializeVehicleProperties(&car);
@@ -401,8 +411,12 @@ void* OBDThreadMain(void* _param) {
 					// Some cars (VW Golf Mk. 3/4) won't answer to the first message if continuously pinged.
 					sleep(1);
 
+					Log_Debug("OBDSERIAL: 01-20 supported PIDs asked successfully.\n");
+
 					char* received;
 					getLastReceivedMessage(&received);
+
+					// Log_Debug("OBDSERIAL: Received %s.\n", received);
 
 					// Receives n bytes of answer and 2 of confirmation (written in ASCII), spacing between each one and trailing \n\n
 					if (strlen(received) == ((2 + r.length) * 3 + 2)) {
@@ -410,6 +424,8 @@ void* OBDThreadMain(void* _param) {
 						// Length is correct, check header
 						char* expectedHeader = malloc(6);
 						sprintf(expectedHeader, "%02X %02X ", r.mode + 0x40, r.pid);
+
+						Log_Debug("OBDSERIAL: Received %s, expected header is %s.\n", received, expectedHeader);
 
 						// Check if we received the correct answer
 						if (strncmp(received, expectedHeader, 6) == 0) {
@@ -452,6 +468,8 @@ void* OBDThreadMain(void* _param) {
 							// OBD.connected = 0;
 							errorCount++;
 						}
+
+						free(expectedHeader);
 					}
 					// Wrong length
 					else {
@@ -638,6 +656,8 @@ void* OBDThreadMain(void* _param) {
 
 
 void startOBDThread() {
+
+	Timer_On(TIMER_OBD_RECONN_DURATION, TIMER_OBD_RECONN);
 
 	// Starts the thread
 	Log_Debug("OBDSERIAL: Starting OBD thread.\n");

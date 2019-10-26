@@ -12,7 +12,6 @@
 #include <applibs/gpio.h>
 #include <applibs/wificonfig.h>
 
-
 #include "appTCP.h"
 #include "cardmanager.h"
 #include "commandinterpreter.h"
@@ -20,6 +19,8 @@
 #include "obdserial.h"
 #include "lib/gpslib/gps.h"
 #include "lib/timer/Inc/Public/timer.h"
+
+
 
 static volatile sig_atomic_t terminationRequested = 0;
 int TCPTimerStarted = 0;
@@ -91,6 +92,8 @@ int main(void)
 	GPIO_Value_Type btnbres;
 	GPIO_Value_Type btnbprev;
 
+	Timer_On(TIMER_CONN_CHECK_DURATION, TIMER_CONN_CHECK);
+
 
 	while (!terminationRequested) {
 
@@ -108,26 +111,39 @@ int main(void)
 		}
 		btnbprev = btnbres;*/
 
+		if (!Timer_Status(TIMER_CONN_CHECK)) {
 
-		WifiConfig_ConnectedNetwork net;
-		int networkConnected = (WifiConfig_GetCurrentNetwork(&net) != -1);
+			Timer_On(TIMER_CONN_CHECK_DURATION, TIMER_CONN_CHECK);
 
-		// Restart the TCP thread with a delay if it is stopped while a WiFi network is connected
-		if (TCPThreadStatus == STATUS_STOPPED && networkConnected) {
-			if (!TCPTimerStarted) {
-				Log_Debug("MAIN: TCP threads are stopped while network is connected. Restarting in %d seconds...\n", TIMER_TCP_RESTART_DURATION / 1000);
-				Timer_On(TIMER_TCP_RESTART_DURATION, TIMER_TCP_RESTART);
-				TCPTimerStarted = 1;
+			WifiConfig_ConnectedNetwork net;
+			WifiConfig_GetCurrentNetwork(&net);
+
+			// TODO: ????
+			int networkConnected = (strlen(net.ssid) > 0);
+
+			// Restart the TCP thread with a delay if it is stopped while a WiFi network is connected
+			if (TCPThreadStatus == STATUS_STOPPED && networkConnected) {
+				if (!TCPTimerStarted) {
+					Log_Debug("MAIN: TCP threads are stopped while network is connected. Restarting in %d seconds...\n", TIMER_TCP_RESTART_DURATION / 1000);
+					Timer_On(TIMER_TCP_RESTART_DURATION, TIMER_TCP_RESTART);
+					TCPTimerStarted = 1;
+				}
+
+				if (!Timer_Status(TIMER_TCP_RESTART)) {
+					startTCPThreads();
+					TCPTimerStarted = 0;
+				}
 			}
-
-			if (!Timer_Status(TIMER_TCP_RESTART)) {
-				startTCPThreads();
-				TCPTimerStarted = 0;
+			// Stop the TCP thread if it is running without a connected WiFi network
+			else if ((TCPThreadStatus == STATUS_RUNNING || TCPThreadStatus == STATUS_STARTING) && !networkConnected) {
+				stopTCPThreads();
 			}
-		}
-		// Stop the TCP thread if it is running without a connected WiFi network
-		else if ((TCPThreadStatus == STATUS_RUNNING || TCPThreadStatus == STATUS_STARTING) && !networkConnected) {
-			stopTCPThreads();
+			// Stop when timeout happened
+			else if (!Timer_Status(TIMER_TCP_TIMEOUT) && (TCPThreadStatus == STATUS_RUNNING || TCPThreadStatus == STATUS_STARTING)) {
+				Log_Debug("MAIN: TCP write timeout.\n");
+				Timer_Off(TIMER_TCP_TIMEOUT);
+				stopTCPThreads();
+			}
 		}
 	}
 

@@ -23,6 +23,7 @@
 #define FF_DEFINED	86604	/* Revision ID */
 
 #include <malloc.h>
+// #include "../memorylogger/Inc/Public/memorylogger.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus

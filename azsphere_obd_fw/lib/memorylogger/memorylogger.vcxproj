@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{f630f6ff-35d6-4b97-b156-de7821e061e9}</ProjectGuid>
+    <ProjectGuid>{ef47c516-97ce-4465-a94a-ac2579268762}</ProjectGuid>
     <Keyword>AzureSphere</Keyword>
-    <RootNamespace>timer</RootNamespace>
+    <RootNamespace>memorylogger</RootNamespace>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
     <ApplicationType>Linux</ApplicationType>
     <ApplicationTypeRevision>1.0</ApplicationTypeRevision>
@@ -46,8 +46,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="timer.c" />
-    <ClInclude Include="Inc\Public\timer.h" />
+    <ClInclude Include="Inc\Public\memorylogger.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

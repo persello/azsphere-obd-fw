@@ -30,10 +30,11 @@ void Timer_On(int _ms, int _timer) {
 }
 
 
+
 int Timer_Status(int _timer) {
 
 	// Timer is disabled
-	if (period == 0) {
+	if (period[_timer] == 0) {
 		return 1;
 	}
 	else {

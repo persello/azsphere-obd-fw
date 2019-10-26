@@ -30,23 +30,23 @@ int newSession() {
 	FILINFO fno;
 	FRESULT res;
 
-	char* name = malloc(16 * sizeof(char));
+	currentFileName = malloc(16 * sizeof(char));
 	int i = 0;
 
 	// Search for files with incremental names.
 	do {
-		memset(name, 0, sizeof(name));
-		sprintf(name, "%d.log", i);
-		res = f_stat(name, &fno);
+		memset(currentFileName, 0, sizeof(currentFileName));
+		sprintf(currentFileName, "%d.log", i);
+		res = f_stat(currentFileName, &fno);
 		i++;
 	} while (res == FR_OK);
 
-	Log_Debug("CARDMANAGER: Creating file \"%s\".\n", name);
+	Log_Debug("CARDMANAGER: Creating file \"%s\".\n", currentFileName);
 
 	res = -1;
 
 	// When we reached a number that previously didn't exist, we create that file.
-	res = f_open(&currentFile, name, FA_READ | FA_WRITE | FA_CREATE_ALWAYS);
+	res = f_open(&currentFile, currentFileName, FA_READ | FA_WRITE | FA_CREATE_ALWAYS);
 
 	if (res == FR_OK) {
 		Log_Debug("CARDMANAGER: File created successfully.\n");

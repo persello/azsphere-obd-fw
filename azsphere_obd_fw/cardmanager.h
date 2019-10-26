@@ -6,6 +6,7 @@
 
 FATFS SD;
 FIL currentFile;
+char* currentFileName;
 bool SDmounted;
 bool SDUnmountRequestFlag;
 int SDThreadLock;

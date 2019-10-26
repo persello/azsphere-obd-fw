@@ -17,6 +17,7 @@
 #include "cardmanager.h"
 #include "lib/gpslib/gps.h"
 #include "lib/timer/Inc/Public/timer.h"
+#include "cardmanager.h"
 
 
 typedef struct {
@@ -455,48 +456,15 @@ void* commandInterpreterThread(void* _param) {
 		else if (!strcmp(currentCommand.header, "LFNM")) {
 			Log_Debug("COMMANDINT: Command decoded as current file name request.\n");
 
-			SDThreadLock = 1;
-
-			// Wait for confirmation
-			while (SDThreadLock != 2);
-
-			Log_Debug("COMMANDINT: SD thread locked.\n");
-
 			answer = (char*)malloc(25 * sizeof(char));
 			memset(answer, 0, 25 * sizeof(char));
 
-			char* name = malloc(16 * sizeof(char));
-			int i = 0;
-			FRESULT res;
-
-			// Search for files with incremental names.
-			do {
-				memset(name, 0, sizeof(name));
-				sprintf(name, "%d.log", i);
-				res = f_stat(name, NULL);
-				i++;
-				
-				// 1ms delay
-				struct timespec t;
-				t.tv_nsec = 1000000UL;
-				nanosleep(&t, NULL);
-
-			} while (res == FR_OK);
-
-			// O = OK
-			if (res == FR_NO_FILE && i > 1) {
-
-				sprintf(name, "%d.log", i - 2);
-				sprintf(answer, "LFNMO%s", name);
+			if (SDmounted) {
+				sprintf(answer, "LFNMO%s", currentFileName);
 			}
-			// Error (E)
 			else {
 				sprintf(answer, "LFNME");
 			}
-
-			free(name);
-
-			SDThreadLock = 0;
 
 			answered = 1;
 		}
@@ -544,25 +512,13 @@ void* commandInterpreterThread(void* _param) {
 			Log_Debug("COMMANDINT: SD thread locked.\n");
 
 			// Performance
-			stopGPSThread();
+			// stopGPSThread();
 			// stopOBDThread();
 
 			// Check whether we're trying to read the current file
-			char* name = malloc(16 * sizeof(char));
-			int i = 0;
-			FRESULT res;
-
 			bool isLastFile = false;
 
-			do {
-				memset(name, 0, sizeof(name));
-				sprintf(name, "%d.log", i);
-				res = f_stat(name, NULL);
-				i++;
-			} while (res == FR_OK);
-
-			sprintf(name, "%d.log", i - 2);
-			if (!strcmp(name, currentCommand.arguments))
+			if (!strcmp(currentFileName, currentCommand.arguments))
 				isLastFile = true;
 
 			answer = (char*)malloc(35 * sizeof(char));
@@ -570,11 +526,11 @@ void* commandInterpreterThread(void* _param) {
 
 			FIL file;
 
-			const unsigned int smallBlockSize = 1024;
+			const unsigned int smallBlockSize = 4096;
 			const unsigned int largeBlockSize = 8192;
 
-			// Not allowed to read last file, and in case of error break now.
-			if (isLastFile || res != FR_NO_FILE) {
+			// Not allowed to read last file.
+			if (isLastFile) {
 				sprintf(answer, "GFILE%s", currentCommand.arguments);
 			}
 			// Not last
@@ -594,6 +550,9 @@ void* commandInterpreterThread(void* _param) {
 					// Start sending data
 					int readBytes;
 					int totalReadBytes;
+
+					long long totalTotal = 0;
+
 					char* buf = (char*)malloc((largeBlockSize + 1) * sizeof(char));
 
 					do {
@@ -604,19 +563,22 @@ void* commandInterpreterThread(void* _param) {
 						memset(buf, 0, (largeBlockSize + 1) * sizeof(char));
 
 						// Read large block
+						int bytesToRead = 0;
 						do {
-							int bytesToRead = ((largeBlockSize - totalReadBytes) < smallBlockSize) ? (largeBlockSize - totalReadBytes) : smallBlockSize;
+							bytesToRead = ((largeBlockSize - totalReadBytes) < smallBlockSize) ? (largeBlockSize - totalReadBytes) : smallBlockSize;
 							f_read(&file, buf + totalReadBytes, bytesToRead, &readBytes);
 							totalReadBytes += readBytes;
 
 							// Read until big chunk is ready or EOF
-						} while (totalReadBytes < largeBlockSize && readBytes == smallBlockSize);
+						} while (totalReadBytes < largeBlockSize && readBytes == bytesToRead);
 
 
 						// Send buffer
 						for (int i = 0; i < totalReadBytes; i++) {
 
 							char c = buf[i];
+
+							totalTotal++;
 
 							// Loop until buffer has free space
 							while ((*sendChar)(c) == -1) { ; }
@@ -628,13 +590,15 @@ void* commandInterpreterThread(void* _param) {
 					free(buf);
 					f_close(&file);
 
+					Log_Debug("COMMANDINT: Sent %lld bytes.\n", totalTotal);
+
 					unsigned long long transferend = nanos();
 
 					unsigned long long elapsed = transferend - transferstart;
 
 					// Send footer (O = ok)
 					memset(answer, 0, 35 * sizeof(char));
-					sprintf(answer, "GFILO%s", currentCommand.arguments);
+					sprintf(answer, "\r\nGFILO%s", currentCommand.arguments);
 
 				}
 				// File doesn't exist
@@ -645,7 +609,9 @@ void* commandInterpreterThread(void* _param) {
 
 			SDThreadLock = 0;
 
-			startGPSThread();
+			free(&file);
+
+			// startGPSThread();
 			// startOBDThread();
 
 			answered = 1;
