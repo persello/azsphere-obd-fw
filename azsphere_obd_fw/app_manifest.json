@@ -6,14 +6,12 @@
   "CmdArgs": [],
   "Capabilities": {
     "AllowedConnections": [],
-    "Gpio": [ 8, 9, 10, 12, 13, 17, 43 ],
-    "Uart": [ "ISU0" ],
-    "SpiMaster": [ "ISU1" ],
+    "Gpio": [ "$AVNET_MT3620_SK_USER_BUTTON_A", "$AVNET_MT3620_SK_USER_BUTTON_B", "$AVNET_MT3620_SK_GPIO17", "$AVNET_MT3620_SK_GPIO43" ],
+    "Pwm": [ "$AVNET_MT3620_SK_PWM_CONTROLLER1", "$AVNET_MT3620_SK_PWM_CONTROLLER2" ],
+    "Uart": [ "$AVNET_MT3620_SK_ISU0_UART" ],
+    "SpiMaster": [ "$AVNET_MT3620_SK_ISU1_SPI" ],
     "AllowedTcpServerPorts": [ 15500 ],
     "WifiConfig": true,
-    "MutableStorage": {
-      "SizeKB": 64
-    },
     "SystemTime": true,
     "AllowedApplicationConnections": [ "005180bc-402f-4cb3-a662-72937dbcde47" ]
   },

@@ -1,6 +1,7 @@
 #include "cardmanager.h"
 
 #include "config.h"
+#include "statusleds.h"
 #include "lib/circularbuffer/buffer.h"
 
 #include <errno.h>
@@ -189,6 +190,10 @@ void* SDThreadMain(void* _param) {
 				while (getCharBuffer(&writeBuffer, &c) != -1 && SDmounted && !SDThreadLock) {
 					if (f_putc(c, &currentFile) == -1) {
 						// unmountSD();
+					}
+					else {
+						// Blink LED
+						setColorLED((color_t)COLOR_GREEN);
 					}
 				}
 

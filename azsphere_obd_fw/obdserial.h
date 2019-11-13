@@ -5,7 +5,6 @@
 
 #include "vehicleproperties.h"
 
-VehicleProperties car;
 
 typedef struct {
 	int connected;
@@ -22,6 +21,7 @@ typedef struct {
 } OBDRequest;
 
 OBDModule OBD;
+VehicleProperties car;
 
 /// <summary> Set to 1 to pause the thread. </summary>
 int OBDThreadLock;

@@ -49,6 +49,10 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <TargetHardwareDirectory>..\..\..\Hardware\avnet_mt3620_sk</TargetHardwareDirectory>
+    <TargetHardwareDefinition>avnet_mt3620_sk.json</TargetHardwareDefinition>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalOptions>-Werror=implicit-function-declaration %(AdditionalOptions)</AdditionalOptions>
