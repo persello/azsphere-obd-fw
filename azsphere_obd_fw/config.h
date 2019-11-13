@@ -6,31 +6,40 @@
 #include <soc/mt3620_spis.h>
 #include <hw/avnet_mt3620_sk.h>
 
-#define PIN_LED_APP		AVNET_MT3620_SK_APP_STATUS_LED_YELLOW
-#define PIN_LED_WLAN	AVNET_MT3620_SK_WLAN_STATUS_LED_YELLOW
+// GPIOs and PWM controllers
 
-#define PIN_LED_RED		AVNET_MT3620_SK_USER_LED_RED
-#define PIN_LED_GREEN	AVNET_MT3620_SK_USER_LED_GREEN
-#define PIN_LED_BLUE	AVNET_MT3620_SK_USER_LED_BLUE
+#define RGB_CONTROLLER	AVNET_MT3620_SK_PWM_CONTROLLER2
+#define LED_CONTROLLER	AVNET_MT3620_SK_PWM_CONTROLLER1
+
+#define CH_LED_APP		0
+#define CH_LED_WLAN		1
+
+#define CH_LED_RED		0
+#define CH_LED_GREEN	1
+#define CH_LED_BLUE		2
 
 #define PIN_BTN_A		AVNET_MT3620_SK_USER_BUTTON_A
 #define PIN_BTN_B		AVNET_MT3620_SK_USER_BUTTON_B
 
+// Application interface
+
 #define INTERFACE_NAME	"wlan0"
 #define PORT_NUMBER		15500
+
+// OBD click UART
 
 #define OBD_SERIAL		AVNET_MT3620_SK_ISU0_UART
 #define OBD_INITIAL_BR	9600
 #define OBD_MAX_ERROR	10
 
-// Bit-banged SPI (until simultaneous R/W is supported by the native API)
+// SPI with auxiliary CS pin (until independent CS control is supported by the native API)
 
-#define SD_CARD_SPI			AVNET_MT3620_SK_ISU_SPI
+#define SD_CARD_SPI			AVNET_MT3620_SK_ISU1_SPI
 #define SD_CARD_CS_PIN		17								// Use 16 for slot 1.
 #define SD_CARD_MOSI_AUX	43								// Use 42 for slot 1.
 
-#define SD_CARD_LOW_SPEED	100000
-#define SD_CARD_HIGH_SPEED	20000000
+#define SD_CARD_LOW_SPEED	100000							// 100kHz
+#define SD_CARD_HIGH_SPEED	20000000						// 20MHz
 
 // Software serial for GPS (see M4 RTApp)
 
@@ -49,7 +58,9 @@
 // 0.2.1: GPS logger. Needs testing on board.
 // 0.2.2: GPS logging works, OBD needs testing again. File I/O over TCP ready for test with app.
 
-// 0.3: Target release, fast SPI interfacing works, GPS and OBD logging is reliable and file transmission works.
+// 0.3.0: Target release, fast SPI interfacing works, GPS and OBD logging is reliable and file transmission works.
+// 0.3.1: Use of onboard status LEDs.
+
 // TARGET: 0.4: Real time transmission to app.
 
 // In order of priority:

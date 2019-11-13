@@ -17,6 +17,7 @@
 #include "commandinterpreter.h"
 #include "config.h"
 #include "obdserial.h"
+#include "statusleds.h"
 #include "lib/gpslib/gps.h"
 #include "lib/timer/Inc/Public/timer.h"
 
@@ -72,6 +73,9 @@ int main(void)
 
 	// The TCP threads are initially stopped.
 	TCPThreadStatus = STATUS_UNKNOWN;
+
+	// Start status LEDs thread.
+	startLEDThread();
 
 	// Starts TCP I/O threads.
 	startTCPThreads();
