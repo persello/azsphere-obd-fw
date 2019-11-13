@@ -122,7 +122,7 @@ int main(void)
 			WifiConfig_ConnectedNetwork net;
 			WifiConfig_GetCurrentNetwork(&net);
 
-			// TODO: ????
+			// TODO
 			int networkConnected = (strlen(net.ssid) > 0);
 
 			// Restart the TCP thread with a delay if it is stopped while a WiFi network is connected
@@ -148,9 +148,13 @@ int main(void)
 				Timer_Off(TIMER_TCP_TIMEOUT);
 				stopTCPThreads();
 			}
+
+			// Turn on LED when connected
+			setWlanLED((TCPThreadStatus == STATUS_RUNNING || TCPThreadStatus == STATUS_STARTING)  * 1000);
 		}
 	}
 
+	stopLEDThread();
 	stopCommandInterpreter();
 	stopTCPThreads();
 	stopSDThread();

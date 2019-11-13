@@ -15,9 +15,9 @@
 
 #include "obdserial.h"
 #include "cardmanager.h"
+#include "statusleds.h"
 #include "lib/gpslib/gps.h"
 #include "lib/timer/Inc/Public/timer.h"
-#include "cardmanager.h"
 
 
 typedef struct {
@@ -44,6 +44,9 @@ void* commandInterpreterThread(void* _param) {
 		command_t currentCommand;
 		memset(currentCommand.header, 0, 5);
 		memset(currentCommand.arguments, 0, 101);
+
+		// LED off
+		setAppLED(0);
 
 		// The result from the receive function (-1 is incomplete, 0 is complete).
 		int result = -1;
@@ -79,6 +82,9 @@ void* commandInterpreterThread(void* _param) {
 		} while (result == -1);
 
 		Log_Debug("COMMANDINT: The command is complete. The content of the buffer is \"%s\".\n", buf);
+
+		// Turn on APP LED
+		setAppLED(500);
 
 		// TODO: Decrypt encrypted commands (start with *).
 
@@ -624,6 +630,9 @@ void* commandInterpreterThread(void* _param) {
 
 		// This filters errors when receiving invalid commands.
 		if (answered) {
+			// Brighter LED
+			setAppLED(1000);
+
 			Log_Debug("COMMANDINT: Sending answer. Content is \"%s\".\n", answer);
 			(*cisend)(answer);
 			free(answer);
@@ -643,6 +652,9 @@ void* commandInterpreterThread(void* _param) {
 
 	// Thread is stopped. This allows the stop function to know it is really stopped.
 	halt = 2;
+
+	// LED off
+	setAppLED(0);
 }
 
 

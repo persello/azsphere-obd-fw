@@ -2,6 +2,15 @@
 
 #include <applibs/pwm.h>
 
+#define COLOR_RED		{ 1000, 231, 188 }
+#define COLOR_ORANGE	{ 1000, 584, 0 }
+#define COLOR_YELLOW	{ 1000, 800, 0 }
+#define COLOR_GREEN		{ 204, 780, 349 }
+#define COLOR_BLUE		{ 0, 478, 1000 }
+#define COLOR_WHITE		{ 1000, 1000, 1000 }
+
+#define BLINK_PERIOD	5000
+
 /// <summary> A simple RGB color struct. </summary>
 typedef struct color {
 	unsigned int r;

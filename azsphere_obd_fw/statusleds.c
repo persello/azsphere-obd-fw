@@ -14,16 +14,6 @@
 #include <pthread.h>
 #include <string.h>
 
-
-#define COLOR_RED		{ 1000, 231, 188 }
-#define COLOR_ORANGE	{ 1000, 584, 0 }
-#define COLOR_YELLOW	{ 1000, 800, 0 }
-#define COLOR_GREEN		{ 204, 780, 349 }
-#define COLOR_BLUE		{ 0, 478, 1000 }
-#define COLOR_WHITE		{ 1000, 1000, 1000 }
-
-#define BLINK_PERIOD	5000
-
 int statusLEDsfd = 0, colorLEDfd = 0;
 int statusLEDThreadStatus = 0;
 
@@ -109,6 +99,7 @@ void startLEDThread() {
 	statusLEDThreadStatus = 0;
 
 	pthread_create(&LEDThread, NULL, statusLEDThread, NULL);
+	pthread_setschedprio(LEDThread, 0);
 
 	return;
 }
@@ -189,6 +180,11 @@ int initializeLEDControllers(PWM_ControllerId statusLEDsController, PWM_Controll
 	redLEDChannel = redChannel;
 	greenLEDchannel = greenChannel;
 	blueLEDChannel = blueChannel;
+
+	// Reset LEDs
+	setAppLED(0);
+	setWlanLED(0);
+	setColorLED((color_t) { 0, 0, 0 });
 
 	return 0;
 }
