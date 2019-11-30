@@ -15,7 +15,3 @@ If you are interested in expanding the command set or you want to build a comman
 ## Logging
 
 Simple text logs are saved in the microSD card. These logs are numbered sequentially (`0.log`, `1.log` and so on) and the content is easily readable. Each line starts with the date and time from the internal RTC clock and is followed by a ten-character identifier and its value. For more details about the structure of a log message, for the available identifiers and measurement units, please refer to the [log page](docs/log.md).
-
-## TODO: LED indicators
-
-## TODO: Libraries and licenses
